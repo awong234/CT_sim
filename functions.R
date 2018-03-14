@@ -10,7 +10,7 @@ taskIN = function(debug = FALSE, taskURL){
     testTaskList = data.frame("taskID" = seq(from = 1, to = 100), "inProgress" = 0, "completed" = 0, "owner" = NA)
     testTaskList = rbind.data.frame(testTaskList, data.frame("taskID" = c(101,102), "inProgress" = c(1,1), "completed" = c(0,0), "owner" = c(Sys.info()['nodename'], "other")))
     row.names(testTaskList) = NULL
-    write.csv(testTaskList, file = 'testTaskList.csv')
+    write.csv(testTaskList, file = 'taskList.csv')
     rm(testTaskList)
   }
   
@@ -39,6 +39,21 @@ taskIN = function(debug = FALSE, taskURL){
 
 taskOut = function(dataToWrite){
   
+  
+  # Under construction
+  
   return(NULL)
+  
+}
+
+
+
+# Need a function to select first task
+
+taskSelect = function(taskList){
+  
+  freeTaskIndex = taskList$inProgress == 0 & taskList$completed == 0
+  
+  freeTasks = taskList$taskID[freeTaskIndex]
   
 }
