@@ -6,36 +6,26 @@
 
 # Need a function to read task ID's, whether in progress, whether output saved (or code with error), and owner
 
-taskIN = function(testTask = FALSE, debug = FALSE, taskPath = '../CT_sim_tasks/taskList.csv'){
-  
-  # Generate test task list
-  
-  if(testTask){
-    testTaskList = data.frame("taskID" = seq(from = 1, to = 100), "inProgress" = 0, "completed" = 0, "owner" = NA)
-    testTaskList = rbind.data.frame(testTaskList, data.frame("taskID" = c(101,102), "inProgress" = c(1,1), "completed" = c(0,0), "owner" = c(Sys.info()['nodename'], "other")))
-    row.names(testTaskList) = NULL
-    write.csv(testTaskList, file = 'taskList.csv')
-    rm(testTaskList)
-  }
+taskIn = function(taskPath = '../CT_sim_tasks/taskList.csv', numTasks = NULL, testTask = FALSE, debug = FALSE){
   
   nName = Sys.info()['nodename'] # Reports name of computer
   
   # # # # Update task list from repo # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
-  # Where is the repo stored? MUST store it in same directory as main repo.
+  # Where is the repo for the task list stored? MUST store it in same directory as main repo.
   
   pathToTasks = normalizePath('../CT_sim_tasks/')
   
-  shell(cmd = paste0("cd ", "\"", pathToTasks, "\"", " & pull.sh"))
+  if(!debug) shell(cmd = paste0("cd ", "\"", pathToTasks, "\"", " & pull.sh"), wait = FALSE) # Command-line interface to git bash, pulls from repo.
+  
+  taskList = read.csv(file = taskPath)
   
   
   
   # # # # Check to see if tasks taken by computer are not done yet - in event of unexpected shutdowns. # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
-  taskList = read.csv(file = taskPath)
-  
   # Is your computer 'working on' an event at the time of this check? If so, it never finished from the previous startup.
-  resetIndex = nName == taskList$owner & taskList$inProgress == 1 
+  resetIndex = nName == taskList$owner & taskList$inProgress == 1
   
   # So, set inProgress to 0, and owner to NA, freeing up the task. 
   
@@ -44,18 +34,47 @@ taskIN = function(testTask = FALSE, debug = FALSE, taskPath = '../CT_sim_tasks/t
   
   
   
-  # # # # Take free tasks # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  # # # # Reserve free tasks # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  
+  if(is.null(numTasks)) numTasks = parallel::detectCores() # Default numTasks to number of cores.
+  
+  freeTaskIndex = taskList$inProgress == 0 & taskList$completed == 0 # Which tasks are {NOT in progress AND NOT complete}
+  
+  freeTasks = taskList$taskID[freeTaskIndex]
+  if(length(freeTasks >= numTasks)){reservedTasks = freeTasks[1:numTasks]}else{reservedTasks = freeTasks}
+  
+  # Rewrite task list
+  
+  taskList$inProgress[reservedTasks] = 1
+  taskList$owner[reservedTasks] = nName
+  write.csv(taskList, file = '../CT_sim_tasks/taskList.csv', row.names = F)
   
   
   
   
   
+  # # # # Push update of tasks reserved to server # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
-  
-  # # # # Push update to server # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   if(!debug) taskOut(taskList)
   
-  return(taskList)
+  return(reservedTasks)
+  
+}
+
+doNothing = function(reservedTasks){
+  
+  Sys.sleep(10); message("Completed!")
+  
+  # Write to task file
+  
+  taskList = read.csv('../CT_sim_tasks/taskList.csv')
+  
+  taskIndex = taskList$taskID %in% reservedTasks
+  
+  taskList$inProgress[taskIndex] = 0
+  taskList$completed[taskIndex] = 1
+  
+  write.csv(taskList, file = '../CT_sim_tasks/taskList.csv', row.names = F)
   
 }
 
@@ -69,7 +88,7 @@ taskOut = function(dataToWrite){
   
   pathToTasks = normalizePath('../CT_sim_tasks/')
   
-  shell(cmd = paste0("cd ", "\"", pathToTasks, "\"", " & pushTasks.sh"))
+  shell(cmd = paste0("cd ", "\"", pathToTasks, "\"", " & pushTasks.sh"), wait = FALSE)
   
   return(NULL)
   
@@ -82,11 +101,6 @@ taskSelect = function(taskList, numTasks = NULL){
   
   # Under construction
   
-  if(is.null(numTasks)) numTasks = parallel::detectCores() # Default to number of cores.
-  
-  freeTaskIndex = taskList$inProgress == 0 & taskList$completed == 0 # Which tasks are {NOT in progress AND NOT complete}
-  
-  freeTasks = taskList$taskID[freeTaskIndex][1:numTasks] # Take first numTasks tasks
   
 }
 

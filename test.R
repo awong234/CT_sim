@@ -1,10 +1,25 @@
 library(ggplot2)
 library(dplyr)
 
+source('functions.R')
+
+# Generate test task list
+
+testTaskList = data.frame("taskID" = seq(from = 1, to = 100), "inProgress" = 0, "completed" = 0, "owner" = NA)
+testTaskList = rbind.data.frame(testTaskList, data.frame("taskID" = c(101,102, 103), 
+                                                         "inProgress" = c(1,1,0), "completed" = c(0,0,1), "owner" = c(Sys.info()['nodename'], "other", "other")))
+row.names(testTaskList) = NULL
+write.csv(testTaskList, file = '../CT_sim_tasks/taskList.csv', row.names = F)
+rm(testTaskList)
+
 
 # Testing taskIn
+reservedTasks = taskIn(debug = F)
 
-taskIN(debug = F, taskURL = 'taskList.csv')
+while(length(reservedTasks > 0)){
+  doNothing(reservedTasks = reservedTasks)
+  reservedTasks = taskIn(debug = F)
+}
 
 
 # Testing getDesign
