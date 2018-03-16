@@ -18,7 +18,7 @@ taskIn = function(taskPath = '../CT_sim_tasks/taskList.csv', numTasks = NULL, te
   
   if(!debug) shell(cmd = paste0("cd ", "\"", pathToTasks, "\"", " & pull.sh"), wait = T) # Command-line interface to git bash, pulls from repo.
   
-  taskList = read.csv(file = taskPath)
+  taskList = read.csv(file = taskPath, stringsAsFactors = F)
   
   
   
@@ -67,7 +67,7 @@ doNothing = function(reservedTasks){
   
   # Write to task file
   
-  taskList = read.csv('../CT_sim_tasks/taskList.csv')
+  taskList = read.csv('../CT_sim_tasks/taskList.csv', stringsAsFactors = F)
   
   taskIndex = taskList$taskID %in% reservedTasks
   
