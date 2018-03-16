@@ -16,7 +16,7 @@ taskIn = function(taskPath = '../CT_sim_tasks/taskList.csv', numTasks = NULL, te
   
   pathToTasks = normalizePath('../CT_sim_tasks/')
   
-  if(!debug) shell(cmd = paste0("cd ", "\"", pathToTasks, "\"", " & pull.sh"), wait = FALSE) # Command-line interface to git bash, pulls from repo.
+  if(!debug) shell(cmd = paste0("cd ", "\"", pathToTasks, "\"", " & pull.sh"), wait = T) # Command-line interface to git bash, pulls from repo.
   
   taskList = read.csv(file = taskPath)
   
@@ -88,7 +88,7 @@ taskOut = function(dataToWrite){
   
   pathToTasks = normalizePath('../CT_sim_tasks/')
   
-  shell(cmd = paste0("cd ", "\"", pathToTasks, "\"", " & pushTasks.sh"), wait = FALSE)
+  shell(cmd = paste0("cd ", "\"", pathToTasks, "\"", " & pushTasks.sh"), wait = T)
   
   return(NULL)
   
