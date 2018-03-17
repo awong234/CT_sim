@@ -1,5 +1,6 @@
 library(ggplot2)
 library(dplyr)
+library(DBI)
 
 source('functions.R')
 
@@ -12,6 +13,40 @@ row.names(testTaskList) = NULL
 write.csv(testTaskList, file = '../CT_sim_tasks/taskList.csv', row.names = F)
 rm(testTaskList)
 
+# Connect to online database
+
+con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql6.gear.host;Database=tasklistntres;Uid=tasklistntres;Pwd=Gy435_eN5-Ry;")
+
+# Read table 
+
+taskList = dbReadTable(conn = con, name = 'tasklistntres')
+
+# Load test table into db
+
+taskList = read.csv(file = "../CT_sim_tasks/taskList.csv")
+
+dbWriteTable(conn = con, name = 'tasklistntres', value = taskList)
+
+# update table to reserve tasks
+
+reservedTasks = seq(1:8)
+
+dbExecute(conn = con, statement = paste0("UPDATE tasklistntres SET inProgress = 1, owner = \'",Sys.info()['nodename'],"\' WHERE taskID IN (", toString(reservedTasks), ");"))
+
+# Did it work? It DID!
+
+dbReadTable(conn = con, name = 'tasklistntres')
+
+# Testing getDesign
+
+xlim = c(0,100)
+ylim = c(0,100)
+
+getDesign(noTraps = 100, noClust = 50)
+
+
+# Deprecated ------------------------------------------------------------------------------------
+
 
 # Testing taskIn
 reservedTasks = taskIn(debug = F)
@@ -21,13 +56,6 @@ while(length(reservedTasks > 0)){
   reservedTasks = taskIn(debug = F)
 }
 
-
-# Testing getDesign
-
-xlim = c(0,100)
-ylim = c(0,100)
-
-getDesign(noTraps = 100, noClust = 50)
 
 # Testing make Vogelcluster
 
@@ -41,3 +69,4 @@ ggplot(data = points) +
   coord_equal()
 
 summary(as.numeric(fields::rdist(points)))
+

@@ -4,7 +4,172 @@
 
 # Remote task read/write section ---------------------------------------------------------------------------------------------------------------------------------------------
 
+# Trying new version with RODBC and a custom SQL server. Git was too slow, data
+# needs to be able to be edited in place, instead of by replacing files.
+
+require(DBI)
+
+reserveTasks = function(nName = Sys.info()['nodename']){
+  
+  # Open database connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  
+  con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql6.gear.host;Database=tasklistntres;Uid=tasklistntres;Pwd=Gy435_eN5-Ry;")
+  
+  taskList = dbReadTable(conn = con, name = 'tasklistntres')
+  
+  
+  
+  
+  # # # # Check to see if tasks taken by computer are not done yet - in event of unexpected shutdowns. # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  
+  # Is your computer 'working on' an event at the time of this check? If so, it never finished from the previous startup.
+  resetIndex = nName == taskList$owner & taskList$inProgress == 1
+  resetTasks = taskList$taskID[resetIndex]
+  
+  # So, set inProgress to 0, and owner to NA, freeing up the task. 
+  
+  if(length(resetTasks) > 0){
+    dbExecute(con, statement = paste0("UPDATE tasklistntres SET owner = NULL, inProgress = 0 WHERE taskID IN (", toString(resetTasks), ")"))
+  }
+  
+  
+  
+  
+  # # # # Obtain free tasks # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  
+  if(is.null(numTasks)) numTasks = parallel::detectCores() # Default numTasks to number of cores.
+  
+  freeTaskIndex = taskList$inProgress == 0 & taskList$completed == 0 # Which tasks are {NOT in progress AND NOT complete}
+  
+  freeTasks = taskList$taskID[freeTaskIndex]
+  if(length(freeTasks >= numTasks)){
+    reservedTasks = freeTasks[1:numTasks]}else{
+      reservedTasks = freeTasks
+      }
+  
+  
+  
+  
+  # # # # Change values in connected table # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  
+  dbExecute(conn = con, 
+            statement = paste0("UPDATE tasklistntres SET inProgress = 1, owner = \'",Sys.info()['nodename'],"\' WHERE taskID IN (", toString(reservedTasks), ");"))
+  
+  
+  
+  # # # # Shut down connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  
+  dbDisconnect(con)
+  
+}
+
+updateTaskCompleted = function(){
+  
+  # Open database connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  
+  con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql6.gear.host;Database=tasklistntres;Uid=tasklistntres;Pwd=Gy435_eN5-Ry;")
+  
+  
+  
+  # # # # Change values in connected table # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  
+  dbExecute(conn = con, statement = paste0("UPDATE tasklistntres SET inProgress = 0, completed = 1 WHERE taskID IN (", toString(reservedTasks), ");"))
+  
+  
+  
+  # # # # Shut down connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  
+  dbDisconnect(con)
+  
+}
+
+
+# Design section ---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Need functions for arbitrary specification of designs.
+
+# Perhaps a general algorithm is not feasible; since there are numerous ways to
+# orient many points in space, the designation of "a cluster of 10" is likely to
+# be arbitrary. Perhaps just pick a few cluster designs and use a switch
+# function to select.
+
+getDesign = function(sigma = 1, noTraps, noClust, xlim, ylim){
+  
+  # Under construction
+  
+  # State space will be a set of limiting values for a rectangle
+  
+  # My opinion is that we should simulate within the set of {2, 4, 5, 10, 20,
+  # 25, 50} clusters to avoid arbitrary placement of singular traps. The effect
+  # of optimal placement of singular traps will confound interpretation, I
+  # think, and the marginal effect of a singular trap elsewhere in a grid
+  # barring some adaptive process is likely very small.
+  
+  # Need algorithm to create a cluster of equally spaced traps 
+  
+  # Probably want a rectangular, or hexagonal(|triangular) approach, allowing
+  # compact structures that are also equidistant.
+  
+  trapsPerClust = noTraps / noClust
+  
+  
+  
+  
+  return(NULL)
+  
+}
+
+makeTriCluster = function(noPoints,spacing){
+  
+  # Under construction
+  
+  # Make cluster in triangular grid fashion
+  points = matrix(data = NA, nrow = nPoints, ncol = 2)
+  
+  return(points)
+  
+}
+
+makeRectCluster = function(){
+  
+  # Under construction
+  
+  # Make cluster in rectangular fashion
+  
+  points = matrix(data = NA, nrow = nPoints, ncol = 2)
+  
+  return(points)
+  
+}
+
+
+# Deprecated -------------------------------------------------------------------------------------------------------------------------------------
+
+makeVogelCluster = function(noPoints, angle = NULL){
+  
+  # Makes a cluster of roughly equidistant points inside a unit disc.
+  # Probably not great use for small number of points.
+  # Probably hard to constrain within-cluster distances.
+  
+  if(is.null(angle)){angle = pi * (3 - sqrt(5))}
+  
+  points = matrix(data = NA, nrow = noPoints, ncol = 2)
+  
+  for(p in 1:noPoints){
+    
+    theta = p * angle
+    r = sqrt(p) / sqrt(noPoints)
+    points[p,] = c(r*cos(theta), r*sin(theta))
+  }
+  
+  return(points)
+  
+  
+}
+
 # Need a function to read task ID's, whether in progress, whether output saved (or code with error), and owner
+
+# functions taskIn and taskOut are not fast enough for rapid i/o of task assignment.
 
 taskIn = function(taskPath = '../CT_sim_tasks/taskList.csv', numTasks = NULL, testTask = FALSE, debug = FALSE){
   
@@ -102,98 +267,5 @@ taskOut = function(){
   shell(cmd = paste0("cd ", "\"", pathToTasks, "\"", " & pushTasks.sh"), wait = T)
   
   return(NULL)
-  
-}
-
-
-# Need a function to select a few tasks
-
-taskSelect = function(taskList, numTasks = NULL){
-  
-  # Under construction
-  
-  
-}
-
-# Design section ---------------------------------------------------------------------------------------------------------------------------------------------------------
-
-# Need functions for arbitrary specification of designs.
-
-# Perhaps a general algorithm is not feasible; since there are numerous ways to
-# orient many points in space, the designation of "a cluster of 10" is likely to
-# be arbitrary. Perhaps just pick a few cluster designs and use a switch
-# function to select.
-
-getDesign = function(sigma = 1, noTraps, noClust, xlim, ylim){
-  
-  # Under construction
-  
-  # State space will be a set of limiting values for a rectangle
-  
-  # My opinion is that we should simulate within the set of {2, 4, 5, 10, 20,
-  # 25, 50} clusters to avoid arbitrary placement of singular traps. The effect
-  # of optimal placement of singular traps will confound interpretation, I
-  # think, and the marginal effect of a singular trap elsewhere in a grid
-  # barring some adaptive process is likely very small.
-  
-  # Need algorithm to create a cluster of equally spaced traps 
-  
-  # Probably want a rectangular, or hexagonal(|triangular) approach, allowing
-  # compact structures that are also equidistant.
-  
-  trapsPerClust = noTraps / noClust
-  
-  
-  
-  
-  return(NULL)
-  
-}
-
-makeTriCluster = function(noPoints,spacing){
-  
-  # Under construction
-  
-  # Make cluster in triangular grid fashion
-  points = matrix(data = NA, nrow = nPoints, ncol = 2)
-  
-  return(points)
-  
-}
-
-makeRectCluster = function(){
-  
-  # Under construction
-  
-  # Make cluster in rectangular fashion
-  
-  points = matrix(data = NA, nrow = nPoints, ncol = 2)
-  
-  return(points)
-  
-}
-
-
-# Deprecated -------------------------------------------------------------------------------------------------------------------------------------
-
-makeVogelCluster = function(noPoints, angle = NULL){
-  
-  # Makes a cluster of roughly equidistant points inside a unit disc.
-  # Probably not great use for small number of points.
-  # Probably hard to constrain within-cluster distances.
-  
-  if(is.null(angle)){angle = pi * (3 - sqrt(5))}
-  
-  points = matrix(data = NA, nrow = noPoints, ncol = 2)
-  
-  for(p in 1:noPoints){
-    
-    theta = p * angle
-    r = sqrt(p) / sqrt(noPoints)
-    points[p,] = c(r*cos(theta), r*sin(theta))
-  }
-  
-  return(points)
-  
   
 }
