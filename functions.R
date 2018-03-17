@@ -55,7 +55,7 @@ taskIn = function(taskPath = '../CT_sim_tasks/taskList.csv', numTasks = NULL, te
   
   # # # # Push update of tasks reserved to server # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
-  if(!debug) taskOut(taskList)
+  if(!debug) taskOut()
   
   return(reservedTasks)
   
@@ -65,23 +65,34 @@ doNothing = function(reservedTasks){
   
   Sys.sleep(10); message("Completed!")
   
-  # Write to task file
+  # Write to UPDATED task file
+  
+  # Pull task file first
+  
+  pathToTasks = normalizePath('../CT_sim_tasks/')
+  
+  shell(cmd = paste0("cd ", "\"", pathToTasks, "\"", " & pull.sh"), wait = T) # Command-line interface to git bash, pulls from repo.
+  
+  # Read UPDATED task list
   
   taskList = read.csv('../CT_sim_tasks/taskList.csv', stringsAsFactors = F)
   
   taskIndex = taskList$taskID %in% reservedTasks
   
+  # Indicate that it is no longer in progress, and it is complete.
   taskList$inProgress[taskIndex] = 0
   taskList$completed[taskIndex] = 1
   
   write.csv(taskList, file = '../CT_sim_tasks/taskList.csv', row.names = F)
+  
+  taskOut()
   
 }
 
 
 # Need a function to write data to remote file. 
 
-taskOut = function(dataToWrite){
+taskOut = function(){
   
   # Intention here is to call a .sh bash script to push changes directly to a
   # Git repo hosting only the task list.
