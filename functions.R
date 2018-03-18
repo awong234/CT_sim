@@ -39,7 +39,7 @@ reserveTasks = function(debug = FALSE, nName = Sys.info()['nodename']){
   
   # # # # Obtain free tasks # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
-  if(is.null(numTasks)) numTasks = parallel::detectCores() # Default numTasks to number of cores.
+  numTasks = parallel::detectCores() # Default numTasks to number of cores.
   
   freeTaskIndex = taskList$inProgress == 0 & taskList$completed == 0 # Which tasks are {NOT in progress AND NOT complete}
   
