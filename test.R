@@ -4,6 +4,22 @@ library(DBI)
 
 source('functions.R')
 
+# Testing task list functions -------------------------------------------------------------------------
+
+# Full test
+
+
+reservedTasks = reserveTasks(debug = F)
+printDB()
+while(length(reservedTasks) > 0){
+  updateTaskCompleted(debug = T)
+  reservedTasks = reserveTasks(debug = F)
+  Sys.sleep(10)
+}
+
+
+
+
 # Generate test task list
 
 testTaskList = data.frame("taskID" = seq(from = 1, to = 100), "inProgress" = 0, "completed" = 0, "owner" = NA)
@@ -19,13 +35,13 @@ con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=
 
 # Read table 
 
-taskList = dbReadTable(conn = con, name = 'tasklistntres')
+(taskList = dbReadTable(conn = con, name = 'tasklistntres'))
 
 # Load test table into db
 
 taskList = read.csv(file = "../CT_sim_tasks/taskList.csv")
 
-dbWriteTable(conn = con, name = 'tasklistntres', value = taskList)
+dbWriteTable(conn = con, name = 'tasklistntres', value = taskList, overwrite = TRUE)
 
 # update table to reserve tasks
 
@@ -37,7 +53,9 @@ dbExecute(conn = con, statement = paste0("UPDATE tasklistntres SET inProgress = 
 
 dbReadTable(conn = con, name = 'tasklistntres')
 
-# Testing getDesign
+
+
+# Testing getDesign --------------------------------------------------------
 
 xlim = c(0,100)
 ylim = c(0,100)

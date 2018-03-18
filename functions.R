@@ -9,7 +9,7 @@
 
 require(DBI)
 
-reserveTasks = function(nName = Sys.info()['nodename']){
+reserveTasks = function(debug = FALSE, nName = Sys.info()['nodename']){
   
   # Open database connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
@@ -32,6 +32,8 @@ reserveTasks = function(nName = Sys.info()['nodename']){
     dbExecute(con, statement = paste0("UPDATE tasklistntres SET owner = NULL, inProgress = 0 WHERE taskID IN (", toString(resetTasks), ")"))
   }
   
+  # Update table after change
+  taskList = dbReadTable(conn = con, name = 'tasklistntres')
   
   
   
@@ -42,7 +44,8 @@ reserveTasks = function(nName = Sys.info()['nodename']){
   freeTaskIndex = taskList$inProgress == 0 & taskList$completed == 0 # Which tasks are {NOT in progress AND NOT complete}
   
   freeTasks = taskList$taskID[freeTaskIndex]
-  if(length(freeTasks >= numTasks)){
+  
+  if(length(freeTasks) >= numTasks){
     reservedTasks = freeTasks[1:numTasks]}else{
       reservedTasks = freeTasks
       }
@@ -51,36 +54,59 @@ reserveTasks = function(nName = Sys.info()['nodename']){
   
   
   # # # # Change values in connected table # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  if(length(reservedTasks) > 0){
+    
+    dbExecute(conn = con, 
+              statement = paste0("UPDATE tasklistntres SET inProgress = 1, owner = \'",Sys.info()['nodename'],"\' WHERE taskID IN (", toString(reservedTasks), ");"))
+    
+  }
   
-  dbExecute(conn = con, 
-            statement = paste0("UPDATE tasklistntres SET inProgress = 1, owner = \'",Sys.info()['nodename'],"\' WHERE taskID IN (", toString(reservedTasks), ");"))
   
-  
+  taskList = dbReadTable(conn = con, name = 'tasklistntres')
   
   # # # # Shut down connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
   dbDisconnect(con)
   
+  if(debug){return(taskList)}else{return(reservedTasks)}
+  
 }
 
-updateTaskCompleted = function(){
+updateTaskCompleted = function(debug = FALSE, nName = Sys.info()['nodename']){
   
   # Open database connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
   con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql6.gear.host;Database=tasklistntres;Uid=tasklistntres;Pwd=Gy435_eN5-Ry;")
   
+  # # # # Which ones were we working on? # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
+  taskList = dbReadTable(conn = con, name = 'tasklistntres')
+  
+  reservedTasksIndex = taskList$inProgress == 1 &  taskList$owner == nName
+  reservedTasks = taskList$taskID[reservedTasksIndex]
   
   # # # # Change values in connected table # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
   dbExecute(conn = con, statement = paste0("UPDATE tasklistntres SET inProgress = 0, completed = 1 WHERE taskID IN (", toString(reservedTasks), ");"))
   
-  
+  taskList = dbReadTable(conn = con, name = 'tasklistntres')
   
   # # # # Shut down connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
   dbDisconnect(con)
   
+  if(debug){return(taskList)}
+  
+}
+
+printDB = function(){
+  con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql6.gear.host;Database=tasklistntres;Uid=tasklistntres;Pwd=Gy435_eN5-Ry;")
+  
+  taskList = dbReadTable(conn = con, name = 'tasklistntres')
+  
+  dbDisconnect(con)
+  
+  return(taskList)
 }
 
 
