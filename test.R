@@ -9,12 +9,14 @@ source('functions.R')
 # Full test
 
 
-reservedTasks = reserveTasks(debug = F)
+reservedTasks = reserveTasks()
 printDB()
 while(length(reservedTasks) > 0){
-  updateTaskCompleted(debug = T)
-  reservedTasks = reserveTasks(debug = F)
-  Sys.sleep(10)
+  updateTaskCompleted(reservedTasks = reservedTasks)
+  printDB()
+  reservedTasks = reserveTasks()
+  printDB()
+  Sys.sleep(2)
 }
 
 
@@ -42,6 +44,8 @@ con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=
 taskList = read.csv(file = "../CT_sim_tasks/taskList.csv")
 
 dbWriteTable(conn = con, name = 'tasklistntres', value = taskList, overwrite = TRUE)
+
+dbDisconnect(con)
 
 # update table to reserve tasks
 

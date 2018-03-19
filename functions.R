@@ -4,75 +4,48 @@
 
 # Remote task read/write section ---------------------------------------------------------------------------------------------------------------------------------------------
 
-# Trying new version with RODBC and a custom SQL server. Git was too slow, data
+# Trying new version with `DBI` and a custom SQL server. Git was too slow, data
 # needs to be able to be edited in place, instead of by replacing files.
 
 require(DBI)
 
-reserveTasks = function(debug = FALSE, nName = Sys.info()['nodename']){
+reserveTasks = function(nName = Sys.info()['nodename']){
   
   # Open database connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
   con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql6.gear.host;Database=tasklistntres;Uid=tasklistntres;Pwd=Gy435_eN5-Ry;")
   
-  taskList = dbReadTable(conn = con, name = 'tasklistntres')
-  
-  
-  
-  
   # # # # Check to see if tasks taken by computer are not done yet - in event of unexpected shutdowns. # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
   # Is your computer 'working on' an event at the time of this check? If so, it never finished from the previous startup.
-  resetIndex = nName == taskList$owner & taskList$inProgress == 1
-  resetTasks = taskList$taskID[resetIndex]
   
   # So, set inProgress to 0, and owner to NA, freeing up the task. 
   
-  if(length(resetTasks) > 0){
-    dbExecute(con, statement = paste0("UPDATE tasklistntres SET owner = NULL, inProgress = 0 WHERE taskID IN (", toString(resetTasks), ")"))
-  }
-  
-  # Update table after change
-  taskList = dbReadTable(conn = con, name = 'tasklistntres')
+  dbExecute(con, statement = paste0("UPDATE tasklistntres SET owner = NULL, inProgress = 0 WHERE inProgress = 1 AND completed = 0 AND owner = \'", nName, "\'"))
   
   
-  
-  # # # # Obtain free tasks # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  # # # # Query free tasks and reserve a number of them # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
   numTasks = parallel::detectCores() # Default numTasks to number of cores.
   
-  freeTaskIndex = taskList$inProgress == 0 & taskList$completed == 0 # Which tasks are {NOT in progress AND NOT complete}
+  dbExecute(con, statement = paste0("UPDATE TOP (", numTasks, ") tasklistntres SET inProgress = 1, owner = \'", nName, "\' WHERE inProgress = 0 AND completed = 0"))
   
-  freeTasks = taskList$taskID[freeTaskIndex]
+  taskList = dbReadTable(con, 'tasklistntres')
+  reservedTasksIndex = taskList$inProgress == 1 & taskList$owner == nName
+  reservedTasks = taskList$taskID[reservedTasksIndex]
   
-  if(length(freeTasks) >= numTasks){
-    reservedTasks = freeTasks[1:numTasks]}else{
-      reservedTasks = freeTasks
-      }
-  
-  
-  
-  
-  # # # # Change values in connected table # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-  if(length(reservedTasks) > 0){
-    
-    dbExecute(conn = con, 
-              statement = paste0("UPDATE tasklistntres SET inProgress = 1, owner = \'",Sys.info()['nodename'],"\' WHERE taskID IN (", toString(reservedTasks), ");"))
-    
-  }
-  
-  
-  taskList = dbReadTable(conn = con, name = 'tasklistntres')
   
   # # # # Shut down connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
   dbDisconnect(con)
   
-  if(debug){return(taskList)}else{return(reservedTasks)}
+  return(reservedTasks)
   
 }
 
-updateTaskCompleted = function(debug = FALSE, nName = Sys.info()['nodename']){
+updateTaskCompleted = function(nName = Sys.info()['nodename'], reservedTasks = NULL){
+  
+  if(is.null(reservedTasks)){stop("You have not reserved any tasks yet, or have lost the reservation. Re-run function to reserve tasks.")}
   
   # Open database connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
@@ -80,10 +53,7 @@ updateTaskCompleted = function(debug = FALSE, nName = Sys.info()['nodename']){
   
   # # # # Which ones were we working on? # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
-  taskList = dbReadTable(conn = con, name = 'tasklistntres')
-  
-  reservedTasksIndex = taskList$inProgress == 1 &  taskList$owner == nName
-  reservedTasks = taskList$taskID[reservedTasksIndex]
+  # Must have saved these values from reserveTasks()
   
   # # # # Change values in connected table # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
@@ -94,8 +64,6 @@ updateTaskCompleted = function(debug = FALSE, nName = Sys.info()['nodename']){
   # # # # Shut down connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
   dbDisconnect(con)
-  
-  if(debug){return(taskList)}
   
 }
 
