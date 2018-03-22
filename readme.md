@@ -25,6 +25,10 @@ This powerpoint file contains a workflow for organizing and executing the simula
 
 Temporary file to run some functions with parameters
 
+## testSQL.R
+
+Temporary file to test the automatic assignment of tasks.
+
 ## trial.txt
 
 A temporary file for people to practice pulling/pushing data from/to Github.
