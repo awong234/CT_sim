@@ -9,7 +9,7 @@
 
 require(DBI)
 
-reserveTasks = function(nName = Sys.info()['nodename']){
+reserveTasks = function(nName = Sys.info()['nodename'], numTasks = NULL){
   
   # Open database connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
@@ -21,12 +21,12 @@ reserveTasks = function(nName = Sys.info()['nodename']){
   
   # So, set inProgress to 0, and owner to NA, freeing up the task. 
   
-  dbExecute(con, statement = paste0("UPDATE tasklistntres SET owner = NULL, inProgress = 0 WHERE inProgress = 1 AND completed = 0 AND owner = \'", nName, "\'"))
+  dbExecute(con, statement = paste0("UPDATE tasklistntres SET owner = 'NONE', inProgress = 0 WHERE inProgress = 1 AND completed = 0 AND owner = \'", nName, "\'"))
   
   
   # # # # Query free tasks and reserve a number of them # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
-  numTasks = parallel::detectCores() # Default numTasks to number of cores.
+  if(is.null(numTasks)){numTasks = parallel::detectCores()} # Default numTasks to number of cores.
   
   dbExecute(con, statement = paste0("UPDATE TOP (", numTasks, ") tasklistntres SET inProgress = 1, owner = \'", nName, "\' WHERE inProgress = 0 AND completed = 0"))
   
@@ -67,7 +67,8 @@ updateTaskCompleted = function(nName = Sys.info()['nodename'], reservedTasks = N
   
 }
 
-printDB = function(){
+printDB = function(){ # perform a simple read on the server database
+  
   con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql6.gear.host;Database=tasklistntres;Uid=tasklistntres;Pwd=Gy435_eN5-Ry;")
   
   taskList = dbReadTable(conn = con, name = 'tasklistntres')
@@ -75,6 +76,35 @@ printDB = function(){
   dbDisconnect(con)
   
   return(taskList)
+}
+
+testSQL = function(reservedTasks = integer(0)){
+  
+  # In parallel, reserve and 'analyze' tasks, updating completed tasks
+  # concurrently.
+  
+  reservedTasksFull = reservedTasks
+  
+  registerDoParallel(cores = detectCores()-1) # Leave one free core.
+  
+  while(length(reservedTasks) > 0){
+    
+    # For each task, write done when completed.
+    foreach(i = reservedTasks, .export = c('updateTaskCompleted'), .packages = c("DBI")) %dopar%{
+      Sys.sleep(10) # "Analysis"
+      updateTaskCompleted(reservedTasks = i)
+    }
+    
+    # Reserve another batch of tasks
+    reservedTasks = reserveTasks()
+    
+    # Append local record of tasks reserved
+    reservedTasksFull = c(reservedTasksFull, reservedTasks)
+    
+  }
+  
+  cat(reservedTasksFull, file = 'reservedTasks.txt')
+  
 }
 
 
