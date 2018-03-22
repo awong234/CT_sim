@@ -10,6 +10,8 @@ The output from the analyses will be compared to obtain the most effective desig
 
 This file will contain all of the custom functions to create a specified design, simulate data, to fetch and push tasks to be done / completed, and perform the analysis on simulated data.
 
+Or - consider breaking up this into several R scripts, such as one for design, one for task automation, one for simulation, etc.
+
 ## SCRdesignSIM.R
 
 This file is the original script provided by Andy trialing the basic idea for the simulation.
