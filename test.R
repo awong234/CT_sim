@@ -27,22 +27,22 @@ while(length(reservedTasks) > 0){
 # WARNING: RESETS STATE OF TASK LIST COMPLETELY
 # Generate test task list
 
-testTaskList = data.frame("taskID" = seq(from = 1, to = 1000), "inProgress" = 0, "completed" = 0, "owner" = "NONE")
-row.names(testTaskList) = NULL
-write.csv(testTaskList, file = '../CT_sim_tasks/taskList.csv', row.names = F)
-rm(testTaskList)
-
-# Connect to online database
-
-con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql6.gear.host;Database=tasklistntres;Uid=tasklistntres;Pwd=Gy435_eN5-Ry;")
-
-# Load test table into db
-
-taskList = read.csv(file = "../CT_sim_tasks/taskList.csv")
-
-dbWriteTable(conn = con, name = 'tasklistntres', value = taskList, overwrite = TRUE)
-
-dbDisconnect(con)
+# testTaskList = data.frame("taskID" = seq(from = 1, to = 100), "inProgress" = 0, "completed" = 0, "owner" = "NONE")
+# row.names(testTaskList) = NULL
+# write.csv(testTaskList, file = '../CT_sim_tasks/taskList.csv', row.names = F)
+# rm(testTaskList)
+# 
+# # Connect to online database
+# 
+# con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql6.gear.host;Database=tasklistntres;Uid=tasklistntres;Pwd=Gy435_eN5-Ry;")
+# 
+# # Load test table into db
+# 
+# taskList = read.csv(file = "../CT_sim_tasks/taskList.csv")
+# 
+# dbWriteTable(conn = con, name = 'tasklistntres', value = taskList, overwrite = TRUE)
+# 
+# dbDisconnect(con)
 
 
 # Testing getDesign --------------------------------------------------------
