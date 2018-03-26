@@ -5,7 +5,7 @@
 if(!require(DBI)){install.packages('DBI')}
 if(!require(odbc)){install.packages('odbc')}
 if(!require(doParallel)){install.packages('doParallel')}
-library(dplyr)
+
 
 source('functions.R')
 
@@ -23,4 +23,18 @@ testSQL(reservedTasks = reservedTasks)
 # To look at the database, use function printDB() without any arguments. The
 # filter will only show you tasks you've reserved with this computer.
 
-printDB() %>% filter(owner == Sys.info()['nodename'])
+remoteTaskList = printDB()
+
+remoteTaskIDs = remoteTaskList[remoteTaskList$owner == Sys.info()['nodename'],1]
+
+# Compare to local record
+
+localTaskIDs = read.csv('reservedTasks.csv')[,1]
+
+# If TRUE, then there are no remote tasks that aren't in your local set
+# If FALSE, there is a task claimed by you on the remote server that wasn't done on your computer; unlikely
+all(remoteTaskIDs %in% localTaskIDs)
+
+# If TRUE, then there are no local tasks that aren't in the remote set
+# If FALSE, there is a task done on your computer that was not claimed by you (probably because someone else claimed it at the same time); more likely
+all(localTaskIDs %in% remoteTaskIDs)
