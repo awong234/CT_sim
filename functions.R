@@ -103,7 +103,7 @@ testSQL = function(reservedTasks = integer(0)){
     
   }
   
-  cat(reservedTasksFull, file = 'reservedTasks.txt')
+  write.csv(reservedTasksFull, file = 'reservedTasks.csv', row.names = F)
   
 }
 
