@@ -1,0 +1,250 @@
+build.cluster=function(ntraps,clusterdim,spacingin,spacingout,plotit){
+  size=ntraps/(clusterdim^2)
+  nfullcluster=floor(size)
+  coords=seq(0,spacingin*(clusterdim-1),by=spacingin)
+  cluster=as.matrix(expand.grid(coords,coords),ncol=2)
+  
+  #Store all full clusters
+  storecluster=list()
+  for(l in 1:nfullcluster){
+    storecluster[[l]]=cluster
+  }
+  #Are there traps that don't form a full cluster?
+  remainder=ntraps-nfullcluster*clusterdim^2
+  ncluster=nfullcluster
+  if(remainder>0){
+    #build remainder cluster
+    x=y=0
+    m=1
+    X2=matrix(0,ncol=2,nrow=0)
+    while(m<(remainder+1)){
+      xy=getxy(x,y,m,spacingin)
+      x=xy[1]
+      y=xy[2]
+      X2=rbind(X2,xy)
+      m=m+1
+    }
+    #Put remainder cluster at the end
+    X2=matrix(X2,ncol=2)
+    storecluster=c(storecluster,list(X2))
+    ncluster=ncluster+1
+  }
+  space=clusterdim*spacingin+spacingout
+  X=matrix(0,nrow=0,ncol=2)
+  x=y=0
+  m=1
+  
+  #Build clusters
+  while(m<(ncluster+1)){
+    xy=getxy(x,y,m,space)
+    x=xy[1]
+    y=xy[2]
+    newcluster=storecluster[[m]]
+    newcluster[,1]=newcluster[,1]+x
+    newcluster[,2]=newcluster[,2]+y
+    X=rbind(X,newcluster)
+    m=m+1
+  }
+  if(plotit){
+    xlim=c(min(X[,1]-space),max(X[,1]+space))
+    ylim=c(min(X[,2]-space),max(X[,2]+space))
+    plot(X,xlim=xlim,ylim=ylim)
+  }
+  return(X)
+}
+
+
+
+getxy=function(x,y,m,space){
+  #2x2
+  if(m==2) y=y+space
+  if(m==3) x=x+space
+  if(m==4) y=y-space
+  #3x3
+  if(m==5){
+    y=2*space
+    x=0
+  }
+  if(m==6) x=x+space
+  if(m==7) x=x+space
+  if(m==8) y=y-space
+  if(m==9) y=y-space
+  #4x4
+  if(m==10){
+    y=3*space
+    x=0
+  }
+  if(m==11) x=x+space
+  if(m==12) x=x+space
+  if(m==13) x=x+space
+  if(m==14) y=y-space
+  if(m==15) y=y-space
+  if(m==16) y=y-space
+  #5x5
+  if(m==17){
+    y=4*space
+    x=0
+  }
+  if(m==18) x=x+space
+  if(m==19) x=x+space
+  if(m==20) x=x+space
+  if(m==21) x=x+space
+  if(m==22) y=y-space
+  if(m==23) y=y-space
+  if(m==24) y=y-space
+  if(m==25) y=y-space
+  #6x6
+  if(m==28){
+    y=5*space
+    x=0
+  }
+  if(m==29) x=x+space
+  if(m==30) x=x+space
+  if(m==31) x=x+space
+  if(m==32) x=x+space
+  if(m==33) x=x+space
+  if(m==34) y=y-space
+  if(m==35) y=y-space
+  if(m==36) y=y-space
+  if(m==37) y=y-space
+  if(m==38) y=y-space
+  
+  #7x7
+  if(m==39){
+    y=6*space
+    x=0
+  }
+  if(m==40) x=x+space
+  if(m==41) x=x+space
+  if(m==42) x=x+space
+  if(m==43) x=x+space
+  if(m==44) x=x+space
+  if(m==45) x=x+space
+  if(m==46) y=y-space
+  if(m==47) y=y-space
+  if(m==48) y=y-space
+  if(m==49) y=y-space
+  if(m==50) y=y-space
+  if(m==51) y=y-space
+  
+  #8x8
+  if(m==52){
+    y=7*space
+    x=0
+  }
+  if(m==53) x=x+space
+  if(m==54) x=x+space
+  if(m==55) x=x+space
+  if(m==56) x=x+space
+  if(m==57) x=x+space
+  if(m==58) x=x+space
+  if(m==59) x=x+space
+  if(m==60) y=y-space
+  if(m==61) y=y-space
+  if(m==62) y=y-space
+  if(m==63) y=y-space
+  if(m==64) y=y-space
+  if(m==65) y=y-space
+  if(m==66) y=y-space
+  
+  #9x9
+  if(m==67){
+    y=8*space
+    x=0
+  }
+  if(m==68) x=x+space
+  if(m==69) x=x+space
+  if(m==70) x=x+space
+  if(m==71) x=x+space
+  if(m==72) x=x+space
+  if(m==73) x=x+space
+  if(m==74) x=x+space
+  if(m==75) x=x+space
+  if(m==76) y=y-space
+  if(m==77) y=y-space
+  if(m==78) y=y-space
+  if(m==79) y=y-space
+  if(m==80) y=y-space
+  if(m==81) y=y-space
+  if(m==82) y=y-space
+  if(m==83) y=y-space
+  
+  #10x10
+  if(m==84){
+    y=9*space
+    x=0
+  }
+  if(m==85) x=x+space
+  if(m==86) x=x+space
+  if(m==87) x=x+space
+  if(m==88) x=x+space
+  if(m==89) x=x+space
+  if(m==90) x=x+space
+  if(m==91) x=x+space
+  if(m==92) x=x+space
+  if(m==93) x=x+space
+  if(m==94) y=y-space
+  if(m==95) y=y-space
+  if(m==96) y=y-space
+  if(m==97) y=y-space
+  if(m==98) y=y-space
+  if(m==99) y=y-space
+  if(m==100) y=y-space
+  if(m==101) y=y-space
+  if(m==102) y=y-space
+  
+  #11x11
+  if(m==103){
+    y=10*space
+    x=0
+  }
+  if(m==104) x=x+space
+  if(m==105) x=x+space
+  if(m==106) x=x+space
+  if(m==107) x=x+space
+  if(m==108) x=x+space
+  if(m==109) x=x+space
+  if(m==110) x=x+space
+  if(m==111) x=x+space
+  if(m==112) x=x+space
+  if(m==113) x=x+space
+  if(m==114) y=y-space
+  if(m==115) y=y-space
+  if(m==116) y=y-space
+  if(m==117) y=y-space
+  if(m==118) y=y-space
+  if(m==119) y=y-space
+  if(m==120) y=y-space
+  if(m==121) y=y-space
+  if(m==122) y=y-space
+  if(m==123) y=y-space
+  
+  #12x12
+  if(m==124){
+    y=11*space
+    x=0
+  }
+  if(m==125) x=x+space
+  if(m==126) x=x+space
+  if(m==127) x=x+space
+  if(m==128) x=x+space
+  if(m==129) x=x+space
+  if(m==130) x=x+space
+  if(m==131) x=x+space
+  if(m==132) x=x+space
+  if(m==133) x=x+space
+  if(m==134) x=x+space
+  if(m==135) x=x+space
+  if(m==136) y=y-space
+  if(m==137) y=y-space
+  if(m==138) y=y-space
+  if(m==139) y=y-space
+  if(m==140) y=y-space
+  if(m==141) y=y-space
+  if(m==142) y=y-space
+  if(m==143) y=y-space
+  if(m==144) y=y-space
+  if(m==145) y=y-space
+  if(m==146) y=y-space
+  return(c(x,y))
+}
