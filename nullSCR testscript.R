@@ -118,6 +118,8 @@ b-a
 #The parameter estimates will differ slightly from oSCR and secr because 
 #This is the binomial integrated likelihood, while those packages use the 
 #poisson integrated likelihood to handle multi session data
+#Note, this likelihood estimates n0, the number of individuals
+#not captured. N_hat is n0_hat+n, the number captured.
 y=apply(data$y,c(1,2),sum)
 n=data$n
 parm=c(qlogis(p0),log(sigma),log(N-nrow(y)))
