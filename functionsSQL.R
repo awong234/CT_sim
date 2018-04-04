@@ -20,15 +20,30 @@ reserveTasks = function(nName = Sys.info()['nodename'], numTasks = NULL){
   # Is your computer 'working on' an event at the time of this check? If so, it never finished from the previous startup.
   
   # So, set inProgress to 0, and owner to NA, freeing up the task. 
+  test = NULL
+  while(is.null(test)){
+    
+    test = tryCatch(expr = {dbExecute(con, statement = paste0("UPDATE tasklistntres SET owner = 'NONE', inProgress = 0 WHERE inProgress = 1 AND completed = 0 AND owner = \'", nName, "\'"))},
+                    error = function(e){},
+                    warning = function(e){}
+    )
+    
+  }
   
-  dbExecute(con, statement = paste0("UPDATE tasklistntres SET owner = 'NONE', inProgress = 0 WHERE inProgress = 1 AND completed = 0 AND owner = \'", nName, "\'"))
   
   
   # # # # Query free tasks and reserve a number of them # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
-  if(is.null(numTasks)){numTasks = parallel::detectCores()} # Default numTasks to number of cores.
+  if(is.null(numTasks)){numTasks = parallel::detectCores()-1} # Default numTasks to number of cores.
   
-  dbExecute(con, statement = paste0("UPDATE TOP (", numTasks, ") tasklistntres SET inProgress = 1, owner = \'", nName, "\' WHERE inProgress = 0 AND completed = 0"))
+  test = NULL
+  while(is.null(test)){
+    
+    test = tryCatch(expr = {dbExecute(con, statement = paste0("UPDATE TOP (", numTasks, ") tasklistntres SET inProgress = 1, owner = \'", nName, "\' WHERE inProgress = 0 AND completed = 0"))},
+                    error = function(e){},
+                    warning = function(e){}
+    )
+  }
   
   taskList = dbReadTable(con, 'tasklistntres')
   reservedTasksIndex = taskList$inProgress == 1 & taskList$owner == nName
@@ -56,8 +71,14 @@ updateTaskCompleted = function(nName = Sys.info()['nodename'], reservedTasks = N
   # Must have saved these values from reserveTasks()
   
   # # # # Change values in connected table # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-  
-  dbExecute(conn = con, statement = paste0("UPDATE tasklistntres SET inProgress = 0, completed = 1 WHERE taskID IN (", toString(reservedTasks), ");"))
+  test = NULL
+  while(is.null(test)){
+    
+    test = tryCatch(expr = {dbExecute(conn = con, statement = paste0("UPDATE tasklistntres SET inProgress = 0, completed = 1 WHERE taskID IN (", toString(reservedTasks), ");"))},
+                    error = function(e){},
+                    warning = function(e){}
+    )
+  }
   
   taskList = dbReadTable(conn = con, name = 'tasklistntres')
   
