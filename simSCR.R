@@ -68,4 +68,4 @@ simSCR<-
     return(out)
   }
  
-data<-simSCR(X=X)
+##data<-simSCR(X=X)
