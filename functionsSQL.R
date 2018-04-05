@@ -9,7 +9,7 @@
 
 require(DBI)
 
-reserveTasks = function(nName = Sys.info()['nodename'], numTasks = NULL){
+reserveTasks = function(numTasks = NULL){
   
   if (!file.exists("reservedTasks.csv")) {
     file.create("reservedTasks.csv")
@@ -23,20 +23,27 @@ reserveTasks = function(nName = Sys.info()['nodename'], numTasks = NULL){
   
   # Is your computer 'working on' an event at the time of this check? If so, it never finished from the previous startup.
   
-  # So, set inProgress to 0, and owner to NA, freeing up the task. 
+  # So, just take those tasks again
+  
   test = NULL
   while(is.null(test)){
     
-    # evaluates to integer value upon success. Will evaluate to NULL upon failure.
-    test = tryCatch(expr = {dbExecute(con, statement = paste0("UPDATE tasklistntres SET owner = 'NONE', inProgress = 0 WHERE inProgress = 1 AND completed = 0 AND owner = \'", nName, "\'"))},
-                    error = function(e){},
-                    warning = function(e){}
+    # evaluates to a table upon success. Will evaluate to NULL upon failure.
+    test = tryCatch(expr = {dbGetQuery(con, statement = paste0("SELECT * FROM tasklistntres WHERE owner = ", "\'", Sys.info()['nodename'], "\'", " AND inProgress = 1 AND completed = 0"))},
+                    error = function(e){
+                      message("Another user has a lock on the server; waiting two seconds to retry . . .")
+                      # Wait a few seconds to retry...
+                      Sys.sleep(2)
+                    }
     )
-    
-    # Wait a few seconds to retry...
-    Sys.sleep(2)
-    
   }
+  
+  # If some left over from before, set those as reserved tasks to be completed.
+  if(nrow(test) > 0){ 
+    reservedTasks = test$taskID
+    # Writing to local copy not necessary, since they should have been registered before.
+    # write.table(x = reservedTasks, file = 'reservedTasks.csv', row.names = F, append = T, sep = ',', col.names = F) 
+    return(test)}
   
   
   
@@ -47,26 +54,20 @@ reserveTasks = function(nName = Sys.info()['nodename'], numTasks = NULL){
   test = NULL
   while(is.null(test)){
     
-    test = tryCatch(expr = {dbExecute(con, statement = paste0("UPDATE TOP (", numTasks, ") tasklistntres SET inProgress = 1, owner = \'", nName, "\' WHERE inProgress = 0 AND completed = 0"))},
-                    error = function(e){},
-                    warning = function(e){}
+    test = tryCatch(expr = {dbExecute(con, statement = paste0("UPDATE TOP (", numTasks, ") tasklistntres SET inProgress = 1, owner = \'", Sys.info()['nodename'], "\' WHERE inProgress = 0 AND completed = 0"))},
+                    error = function(e){    
+                      message("Another user has a lock on the server; waiting two seconds to retry . . .")
+                      # Wait a few seconds to retry...
+                      Sys.sleep(2)
+                    }
     )
-    
-    # Wait a few seconds to retry...
-    Sys.sleep(2)
   }
   
-  taskList = dbReadTable(con, 'tasklistntres')
+  reservedTasks = dbGetQuery(con, statement = paste0("SELECT * FROM tasklistntres WHERE inProgress = 1 AND owner = ", "\'", Sys.info()['nodename'], "\'"))[,1]
   
   dbDisconnect(con)
   
-  reservedTasksIndex = taskList$inProgress == 1 & taskList$owner == nName
-  reservedTasks = taskList$taskID[reservedTasksIndex]
-  
-  
   # # # # Shut down connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-  
-  
   
   # Append local record of tasks reserved
   write.table(x = reservedTasks, file = 'reservedTasks.csv', row.names = F, append = T, sep = ',', col.names = F)
@@ -75,9 +76,9 @@ reserveTasks = function(nName = Sys.info()['nodename'], numTasks = NULL){
   
 }
 
-updateTaskCompleted = function(nName = Sys.info()['nodename'], reservedTasks = NULL){
+updateTaskCompleted = function(reservedTasks = NULL){
   
-  if(is.null(reservedTasks)){stop("You have not reserved any tasks yet, or have lost the reservation. Re-run function to reserve tasks.")}
+  if(is.null(reservedTasks)){stop("You have not reserved any tasks yet, or have lost the reservation. Re-run reserveTasks().")}
   
   # Open database connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
@@ -88,17 +89,18 @@ updateTaskCompleted = function(nName = Sys.info()['nodename'], reservedTasks = N
   # Must have saved these values from reserveTasks()
   
   # # # # Change values in connected table # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  
   test = NULL
   while(is.null(test)){
     
     test = tryCatch(expr = {dbExecute(conn = con, statement = paste0("UPDATE tasklistntres SET inProgress = 0, completed = 1 WHERE taskID IN (", toString(reservedTasks), ");"))},
-                    error = function(e){},
-                    warning = function(e){}
+                    error = function(e){
+                      message("Another user has a lock on the server; waiting two seconds to retry . . .")
+                      Sys.sleep(2)
+                    }
     )
-    
-    # Wait a few seconds to retry...
-    Sys.sleep(2)
   }
+  
   
   # # # # Shut down connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
