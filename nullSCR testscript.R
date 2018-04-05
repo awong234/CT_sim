@@ -56,10 +56,10 @@ for(i in 1:6){
   }
 }
 
-
+source("build.cluster.R")
 source("build.cluster.alt.R")
 ntraps=120 #Currently works for up to 144 clusters or 144 traps in a single cluster.
-ntrapsC=c(2,3,4,5,6,7,8,9)#number of traps in a cluster
+ntrapsC=c(1,2,3,4,5,6,7,8)#number of traps in a cluster
 spacingin=c(1,1.5) #interior spacing
 spacingout=c(1.5,2.5) #cluster spacing
 for(i in 1:8){
