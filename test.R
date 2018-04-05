@@ -27,10 +27,8 @@ while(length(reservedTasks) > 0){
 # WARNING: RESETS STATE OF TASK LIST COMPLETELY
 # Generate test task list
 
-# testTaskList = data.frame("taskID" = seq(from = 1, to = 100), "inProgress" = 0, "completed" = 0, "owner" = "NONE")
+# testTaskList = data.frame("taskID" = seq(from = 1, to = 500), "inProgress" = 0, "completed" = 0, "owner" = "NONE")
 # row.names(testTaskList) = NULL
-# write.csv(testTaskList, file = '../CT_sim_tasks/taskList.csv', row.names = F)
-# rm(testTaskList)
 # 
 # # Connect to online database
 # 
@@ -38,9 +36,7 @@ while(length(reservedTasks) > 0){
 # 
 # # Load test table into db
 # 
-# taskList = read.csv(file = "../CT_sim_tasks/taskList.csv")
-# 
-# dbWriteTable(conn = con, name = 'tasklistntres', value = taskList, overwrite = TRUE)
+# dbWriteTable(conn = con, name = 'tasklistntres', value = testTaskList, overwrite = TRUE)
 # 
 # dbDisconnect(con)
 
