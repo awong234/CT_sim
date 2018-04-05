@@ -11,6 +11,10 @@ require(DBI)
 
 reserveTasks = function(nName = Sys.info()['nodename'], numTasks = NULL){
   
+  if (!file.exists("reservedTasks.csv")) {
+    file.create("reservedTasks.csv")
+  }
+  
   # Open database connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
   con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql6.gear.host;Database=tasklistntres;Uid=tasklistntres;Pwd=Gy435_eN5-Ry;")
@@ -23,10 +27,14 @@ reserveTasks = function(nName = Sys.info()['nodename'], numTasks = NULL){
   test = NULL
   while(is.null(test)){
     
+    # evaluates to integer value upon success. Will evaluate to NULL upon failure.
     test = tryCatch(expr = {dbExecute(con, statement = paste0("UPDATE tasklistntres SET owner = 'NONE', inProgress = 0 WHERE inProgress = 1 AND completed = 0 AND owner = \'", nName, "\'"))},
                     error = function(e){},
                     warning = function(e){}
     )
+    
+    # Wait a few seconds to retry...
+    Sys.sleep(2)
     
   }
   
@@ -43,16 +51,25 @@ reserveTasks = function(nName = Sys.info()['nodename'], numTasks = NULL){
                     error = function(e){},
                     warning = function(e){}
     )
+    
+    # Wait a few seconds to retry...
+    Sys.sleep(2)
   }
   
   taskList = dbReadTable(con, 'tasklistntres')
+  
+  dbDisconnect(con)
+  
   reservedTasksIndex = taskList$inProgress == 1 & taskList$owner == nName
   reservedTasks = taskList$taskID[reservedTasksIndex]
   
   
   # # # # Shut down connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
-  dbDisconnect(con)
+  
+  
+  # Append local record of tasks reserved
+  write.table(x = reservedTasks, file = 'reservedTasks.csv', row.names = F, append = T, sep = ',', col.names = F)
   
   return(reservedTasks)
   
@@ -78,9 +95,10 @@ updateTaskCompleted = function(nName = Sys.info()['nodename'], reservedTasks = N
                     error = function(e){},
                     warning = function(e){}
     )
+    
+    # Wait a few seconds to retry...
+    Sys.sleep(2)
   }
-  
-  taskList = dbReadTable(conn = con, name = 'tasklistntres')
   
   # # # # Shut down connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
@@ -104,27 +122,19 @@ testSQL = function(reservedTasks = integer(0)){
   # In parallel, reserve and 'analyze' tasks, updating completed tasks
   # concurrently.
   
-  reservedTasksFull = reservedTasks
-  
   registerDoParallel(cores = detectCores()-1) # Leave one free core.
   
   while(length(reservedTasks) > 0){
     
     # For each task, write done when completed.
     foreach(i = reservedTasks, .export = c('updateTaskCompleted'), .packages = c("DBI")) %dopar%{
-      Sys.sleep(10) # "Analysis"
+      Sys.sleep(1) # "Analysis"
       updateTaskCompleted(reservedTasks = i)
     }
     
     # Reserve another batch of tasks
     reservedTasks = reserveTasks()
-    
-    # Append local record of tasks reserved
-    reservedTasksFull = c(reservedTasksFull, reservedTasks)
-    
   }
-  
-  write.csv(reservedTasksFull, file = 'reservedTasks.csv', row.names = F)
   
 }
 

@@ -7,7 +7,7 @@ if(!require(odbc)){install.packages('odbc')}
 if(!require(doParallel)){install.packages('doParallel')}
 
 
-source('functions.R')
+source('functionsSQL.R')
 
 # Reserve tasks - always to be run initially
 reservedTasks = reserveTasks()
@@ -29,7 +29,7 @@ remoteTaskIDs = remoteTaskList[remoteTaskList$owner == Sys.info()['nodename'],1]
 
 # Compare to local record
 
-localTaskIDs = read.csv('reservedTasks.csv')[,1]
+localTaskIDs = read.csv('reservedTasks.csv', header = F)[,1]
 
 # If TRUE, then there are no remote tasks that aren't in your local set
 # If FALSE, there is a task claimed by you on the remote server that wasn't done on your computer; unlikely
