@@ -31,9 +31,11 @@ simSCR<-
    y.used<- y.used[1:N, 1:nrow(X), 1:K]
    
    # compute total occupancy on the landscape by evaluating on a fine grid (Xgrid above)
-   p.grid<- lamd[1:N, (nrow(X)+1):J]
-   H.grid<- colSums(p.grid)
-   psi.grid<- 1-exp(-H.grid)
+   lam.grid<- lamd[1:N, (nrow(X)+1):J]
+   p.grid=1-exp(-lam.grid)
+   p.grid=1-(1-p.grid)^K
+   psi.grid<- colSums(p.grid)
+   # psi.grid<- 1-exp(-H.grid)
    
    # compute total occupancy probability on the trap locations
    lamd<- lamd[1:N, 1:nrow(X)]
@@ -64,10 +66,12 @@ simSCR<-
    scaps[scaps>0]=scaps[scaps>0]-1
    nscap=sum(scaps>0)
    sumscap=sum(scaps)
-   # y.used2D=apply(y.used,c(2,3),sum)
-   # y.occ2D=apply(y.occ,c(2,3),sum)
-   # sum(y.occ2D)/sum(y.used2D) #est. of thinning rate1
+   #estimate occupancy p
+   y.used2D=apply(y.used,c(2,3),sum)
+   y.occ2D=1*(apply(y.occ,c(2,3),sum)>0)
+   sites.used=sum(rowSums(y.used2D)>0)
+   p.bar=sum(y.occ2D>0)/(sites.used*K) #estimated occupancy p
    out<-list(y.used=y.used,y.occ=y.occ,y.scr=y,s=s,X=X, K=K,n=n,nscap=nscap,sumscap=sumscap,buff=buff,
-             psi.bar = mean(psi.grid) )
+             psi.bar = mean(psi.grid),p.bar=p.bar )
    return(out)
  }
