@@ -6,7 +6,10 @@ e2dist=function (x, y) {
 
 simSCR<- 
  function(N=120,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 0.7,
-          thinning.rate2=0.7,grid.space=0.5){
+          thinning.rate2=0.7,grid.space=0.5, seed = NULL){
+   
+   # Added for reproducibility
+   set.seed(seed)
    
    xmin<- min(X[,1])-buff
    xmax<- max(X[,1])+buff
