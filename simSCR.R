@@ -32,10 +32,11 @@ simSCR<-
    
    # compute total occupancy on the landscape by evaluating on a fine grid (Xgrid above)
    lam.grid<- lamd[1:N, (nrow(X)+1):J]
-   p.grid=1-exp(-lam.grid)
-   p.grid=1-(1-p.grid)^K
-   psi.grid<- colSums(p.grid)
-   # psi.grid<- 1-exp(-H.grid)
+   lam.gridJ=colSums(lam.grid)
+   p.grid=1-exp(-lam.gridJ)
+   psi.grid=1-(1-p.grid)^K
+
+   
    
    # compute total occupancy probability on the trap locations
    lamd<- lamd[1:N, 1:nrow(X)]
