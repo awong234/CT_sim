@@ -43,7 +43,7 @@ reserveTasks = function(numTasks = NULL){
     reservedTasks = test$taskID
     # Writing to local copy not necessary, since they should have been registered before.
     # write.table(x = reservedTasks, file = 'reservedTasks.csv', row.names = F, append = T, sep = ',', col.names = F) 
-    return(test)}
+    return(reservedTasks)}
   
   
   
