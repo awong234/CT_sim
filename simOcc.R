@@ -1,5 +1,6 @@
 simOcc<- 
-  function(p,psi,J,K){
+  function(p,psi,J,K,seed=NULL){
+    set.seed(seed)
     occupied=detected=matrix(0,nrow=J,ncol=K)
     for(j in 1:J){
       occupied[j]=rbinom(1,1,psi)
