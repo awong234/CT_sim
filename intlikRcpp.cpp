@@ -11,18 +11,20 @@ double intlikRcpp(NumericVector parm, NumericMatrix ymat,IntegerMatrix X, int K,
   double nG=G.nrow();
   int J=X.nrow();
   NumericMatrix Pm(J,nG);
+  NumericMatrix lamd(J,nG);
   NumericMatrix probcap(J,nG);
   NumericVector lik_cond(nG);
   NumericVector nv(n+1,1.0);
   double lik_cond_sum;
   NumericVector lik_marg(n+1);
-  double p0=1/(1+exp(-parm(0)));
+  double lam0=exp(parm(0));
   double sigma=exp(parm(1));
   double n0=exp(parm(2));
   //calculate probcap
   for (int j=0; j<J; j++) {
     for (int g=0; g<nG; g++){
-      probcap(j,g)=p0*exp(-1/(2*pow(sigma,2))*D(j,g)*D(j,g));
+      lamd(j,g)=lam0*exp(-1/(2*pow(sigma,2))*D(j,g)*D(j,g));
+      probcap(j,g)=1-exp(-lamd(j,g));
     }
   }
   nv(n)=n0;

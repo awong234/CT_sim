@@ -76,57 +76,21 @@ for(i in 1:8){
 
 
 
-#####Test speed of different R packages to fit null SCR model######
 #Simulate data
 source("simSCR.R")
 N=50
-p0=0.2
+lam0=0.4
 sigma=0.5
 K=10
 buff=3
 X=expand.grid(3:9,3:9)
-data=simSCR(N=N,p0=p0,sigma=sigma,K=K,X=X,
-            buff=buff)
+thinning.rate1 = 0.7
+thinning.rate2=0.7
+grid.space=0.5 #spacing for grid to calculate psi.bar
+data=simSCR(N=N,lam0=lam0,sigma=sigma,K=K,X=X,
+            buff=buff,thinning.rate1,thinning.rate2,
+            grid.space)
 
-#Skipping SPIM here
-##fit the model using secr
-library(secr)
-ncap=sum(data$y>0)
-input=data.frame(session=rep("a",ncap),ID=rep(0,ncap),Occasion=rep(0,ncap),Detector=rep(0,ncap))
-caps=which(data$y>0,arr.ind=TRUE)
-for(i in 1:nrow(caps)){
-  input[i,c(2,3,4)]=c(caps[i,1],caps[i,3],caps[i,2])
-}
-
-traps=data.frame(num=1:nrow(X),x=X[,1],y=X[,2])
-traps=read.traps(data=traps,detector="proximity")
-data2=make.capthist(input,traps)
-## generate habitat mask
-mask=make.mask (traps, buffer = buff, nx = 48)
-#fit and time model
-a=Sys.time()
-secr.out=secr.fit(data2, model = g0~1, mask = mask,detectfn=0)
-b=Sys.time()
-b-a
-
-##fit the model using oSCR
-library(oSCR)
-tdf=data.frame(Detector=1:49,X=X[,1],Y=X[,2])
-tdf=list(cbind(tdf,matrix(1,nrow=49,ncol=K)))
-input=cbind(input,rep(1,ncap))#Give everyone the same sex
-data.oscr=data2oscr(input,sess.col=1,id.col=2,occ.col=3,trap.col=4,ntraps=49,K=10,tdf=tdf,sex.col=5)
-data.sf=make.scrFrame(caphist=data.oscr$y3d, indCovs=NULL, 
-                             traps=data.oscr$traplocs,trapCovs=NULL ,
-                             trapOperation=data.oscr$trapopp )
-# Make a state-space
-data.ss=make.ssDF(data.sf, buffer=buff, res = 0.25)
-
-#  fit and time model
-a=Sys.time()
-oSCR.out=oSCR.fit(model=list(D~1,p0~1,sig~1), data.sf, ssDF=data.ss,
-                 start.vals=c(qlogis(p0),log(sigma),log(0.5)),trimS=4)
-b=Sys.time()
-b-a
 
 ##SCRbook integrated likelihood
 #The parameter estimates will differ slightly from oSCR and secr because 
@@ -134,9 +98,9 @@ b-a
 #poisson integrated likelihood to handle multi session data
 #Note, this likelihood estimates n0, the number of individuals
 #not captured. N_hat is n0_hat+n, the number captured.
-y=apply(data$y,c(1,2),sum)
+y=apply(data$y.scr,c(1,2),sum)
 n=data$n
-parm=c(qlogis(p0),log(sigma),log(N-nrow(y)))
+parm=c(log(p0),log(sigma),log(N-nrow(y)))
 delta=0.25 #state space spacing
 #make state space
 Xl <- min(X[, 1]) - buff
@@ -157,11 +121,12 @@ ymat <- rbind(y, rep(0, ncol(y)))
 #intlik function
 intlik=function (parm, ymat = ymat,X=X, K=K,G=G,D=D,n=n) {
   nG <- nrow(G)
-  alpha0 <- plogis(parm[1])
+  lam0 <- exp(parm[1])
   sigma <- exp(parm[2])
   n0 <- exp(parm[3])
   nv <- c(rep(1, n), n0)
-  probcap <- alpha0 * exp(-1/(2*sigma^2) * D * D)
+  lamd<- lam0*exp(-D*D/(2*sigma*sigma))
+  probcap=1-exp(-lamd)
   Pm <- matrix(NA, nrow = nrow(probcap), ncol = ncol(probcap))
   lik.marg <- rep(NA, nrow(ymat))
   for (i in 1:nrow(ymat)) {
@@ -203,15 +168,18 @@ microbenchmark(intlikRcpp(parm,ymat,as.matrix(X), K, G,D= D,n=n),
 #simulate SCR data again, or use existing data
 source("simSCR.R")
 N=50
-p0=0.2
-sigma=0.5
-K=5
+lam0=0.4
+sigma=0.25
+K=10
 buff=3
 X=expand.grid(3:9,3:9)
-data=simSCR(N=N,p0=p0,sigma=sigma,K=K,X=X,
-            buff=buff)
-#convert to occupancy data
-y=1*(apply(data$y,c(2,3),sum)>0)#site by occasion detections
+thinning.rate1 = 0.7
+thinning.rate2=0.7
+grid.space=0.5
+data=simSCR(N=N,lam0=lam0,sigma=sigma,K=K,X=X,
+            buff=buff,thinning.rate1,thinning.rate2,grid.space)
+#convert occupancy data to presence/absence
+y=1*(apply(data$y.occ,c(2,3),sum)>0)#site by occasion detections
 y=rowSums(y)#sum over occasions
 K=data$K
 #LL function from Applied Hierarchical Models book page 43.
@@ -238,3 +206,15 @@ lower<-occ.out$estimate-1.96*SE
 ests=cbind(occ.out$estimate,lower, upper)#on logit scale
 plogis(ests) #on real scale
 
+
+
+#simulate and fit true occupancy data using same LL
+p=0.3
+psi=0.8
+J=49
+K=10
+data.occ=simOcc(p,psi,J,K)
+#fit occupancy model 
+occ.out=nlm(negLogLikeocc,parm,y=data.occ,K=K,hessian=TRUE)
+#p_hat, psi_hat
+plogis(occ.out$estimate)
