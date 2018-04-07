@@ -56,6 +56,8 @@ simSCR<-
        }
      }
    }
+   #convert SCR data set from counts to presence/absense
+   y.scr[y.scr>0]=1
    #make occupancy data set
    y.occ=1*(apply(y.det,c(2,3),sum)>0)#site by occasion detections
    y.occ=rowSums(y.occ)#sum over occasions
