@@ -59,7 +59,7 @@ simSCR<-
    #make occupancy data set
    y.occ=1*(apply(y.det,c(2,3),sum)>0)#site by occasion detections
    y.occ=rowSums(y.occ)#sum over occasions
-   #remove uncaptured individuals in SCR data set
+   #remove uncaptured individuals in SCR data set. sort.
    y<- y.scr
    caps=apply(y,1,sum)
    idx=order(caps,decreasing=TRUE)
@@ -74,11 +74,9 @@ simSCR<-
    nscap=sum(scaps>0) #Total number of individuals with spatial recaps
    sumscap=sum(scaps) #Total number of spatial recaps. Use this to screen data sets.
    #estimate occupancy p
-   y.use2D=apply(y.use,c(2,3),sum)
-   sites.use=sum(rowSums(y.use2D)>0)#sites use at least once
-   y.det2D=1*(apply(y.det,c(2,3),sum)>0)#trap by occ presence/absence
-   p.bar=sum(y.det2D)/(sites.use*K) #estimated occupancy p
-   out<-list(y.use=y.use,y.occ=y.occ,y.scr=y,s=s,X=X, K=K,n=n,nscap=nscap,sumscap=sumscap,buff=buff,
+   sites.used=sum(apply(y.use,2,sum)>0)#sites use at least once
+   p.bar=sum(y.occ)/(sites.used*K) #estimated occupancy p
+   out<-list(y.use=y.use,y.det=y.det,y.occ=y.occ,y.scr=y,s=s,X=X, K=K,n=n,nscap=nscap,sumscap=sumscap,buff=buff,
              psi.bar = mean(psi.grid),p.bar=p.bar )
    return(out)
  }

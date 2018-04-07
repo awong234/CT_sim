@@ -178,9 +178,7 @@ thinning.rate2=0.7
 grid.space=0.5
 data=simSCR(N=N,lam0=lam0,sigma=sigma,K=K,X=X,
             buff=buff,thinning.rate1,thinning.rate2,grid.space)
-#convert occupancy data to presence/absence
-y=1*(apply(data$y.occ,c(2,3),sum)>0)#site by occasion detections
-y=rowSums(y)#sum over occasions
+y=data$y.occ
 K=data$K
 #LL function from Applied Hierarchical Models book page 43.
 parm=c(qlogis(0.5),qlogis(0.5)) #starting values p=0.4, psi=0.9
