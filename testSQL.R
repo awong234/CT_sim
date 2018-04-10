@@ -35,6 +35,12 @@ localTaskIDs = read.csv('reservedTasks.csv', header = F)[,1]
 # If FALSE, there is a task claimed by you on the remote server that wasn't done on your computer; unlikely
 all(remoteTaskIDs %in% localTaskIDs)
 
+# Which ones are causing difficulty?
+which(!remoteTaskIDs %in% localTaskIDs)
+
 # If TRUE, then there are no local tasks that aren't in the remote set
 # If FALSE, there is a task done on your computer that was not claimed by you (probably because someone else claimed it at the same time); more likely
 all(localTaskIDs %in% remoteTaskIDs)
+
+# Which ones are causing difficulty?
+which(!localTaskIDs %in% remoteTaskIDs)
