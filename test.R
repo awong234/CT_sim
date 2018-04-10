@@ -2,7 +2,7 @@ library(ggplot2)
 library(dplyr)
 library(DBI)
 
-source('functions.R')
+source('functionsSQL.R')
 
 # Testing task list functions -------------------------------------------------------------------------
 
@@ -43,37 +43,3 @@ dbWriteTable(conn = con, name = 'tasklistntres', value = testTaskList, overwrite
 dbDisconnect(con)
 
 head(printDB())
-
-# Testing getDesign --------------------------------------------------------
-
-xlim = c(0,100)
-ylim = c(0,100)
-
-getDesign(noTraps = 100, noClust = 50)
-
-
-# Deprecated ------------------------------------------------------------------------------------
-
-
-# Testing taskIn
-reservedTasks = taskIn(debug = F)
-
-while(length(reservedTasks > 0)){
-  doNothing(reservedTasks = reservedTasks)
-  reservedTasks = taskIn(debug = F)
-}
-
-
-# Testing make Vogelcluster
-
-points = makeVogelCluster(noPoints = 20)
-
-points = data.frame(points)
-names(points) = c('x', 'y')
-
-ggplot(data = points) + 
-  geom_point(aes(x = x, y = y)) + 
-  coord_equal()
-
-summary(as.numeric(fields::rdist(points)))
-
