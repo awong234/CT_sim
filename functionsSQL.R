@@ -41,6 +41,19 @@ reserveTasks = function(numTasks = NULL){
   # If some left over from before, set those as reserved tasks to be completed.
   if(nrow(test) > 0){ 
     reservedTasks = test$taskID
+    
+    test = NULL
+    while(is.null(test)){
+      
+      test = tryCatch(expr = {dbExecute(con, statement = paste0("UPDATE tasklistntres SET timeStarted = ", as.integer(Sys.time()), " WHERE taskID IN (", toString(reservedTasks), ")"))},
+                      error = function(e){    
+                        message("Another user has a lock on the server; waiting two seconds to retry . . .")
+                        # Wait a few seconds to retry...
+                        Sys.sleep(2)
+                      }
+      )
+    }
+    
     # Writing to local copy not necessary, since they should have been registered before.
     # write.table(x = reservedTasks, file = 'reservedTasks.csv', row.names = F, append = T, sep = ',', col.names = F) 
     return(reservedTasks)}
@@ -54,7 +67,7 @@ reserveTasks = function(numTasks = NULL){
   test = NULL
   while(is.null(test)){
     
-    test = tryCatch(expr = {dbExecute(con, statement = paste0("UPDATE TOP (", numTasks, ") tasklistntres SET inProgress = 1, owner = \'", Sys.info()['nodename'], "\' WHERE inProgress = 0 AND completed = 0"))},
+    test = tryCatch(expr = {dbExecute(con, statement = paste0("UPDATE TOP (", numTasks, ") tasklistntres SET inProgress = 1, owner = \'", Sys.info()['nodename'], "\', timeStarted = ", as.integer(Sys.time()), " WHERE inProgress = 0 AND completed = 0"))},
                     error = function(e){    
                       message("Another user has a lock on the server; waiting two seconds to retry . . .")
                       # Wait a few seconds to retry...
@@ -93,7 +106,7 @@ updateTaskCompleted = function(reservedTasks = NULL){
   test = NULL
   while(is.null(test)){
     
-    test = tryCatch(expr = {dbExecute(conn = con, statement = paste0("UPDATE tasklistntres SET inProgress = 0, completed = 1 WHERE taskID IN (", toString(reservedTasks), ");"))},
+    test = tryCatch(expr = {dbExecute(conn = con, statement = paste0("UPDATE tasklistntres SET inProgress = 0, completed = 1, timeEnded = ", as.integer(Sys.time()), " WHERE taskID IN (", toString(reservedTasks), ");"))},
                     error = function(e){
                       message("Another user has a lock on the server; waiting two seconds to retry . . .")
                       Sys.sleep(2)
