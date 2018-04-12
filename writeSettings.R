@@ -65,16 +65,6 @@ attr(settings, which = c("out.attrs")) = NULL
 
 any(settings %>% duplicated()) # No duplicates
 
-replicates = 100
-
-settings = uniqueSettings[rep(seq(nrow(uniqueSettings)), replicates),]
-
-# Check to see that there are exactly `replicates` duplicates - note; apply coerces to matrix, so it won't be the same as slicing off a row:
-
-# checkSums = apply(X = settings,MARGIN = 1, FUN = digest::sha1) 
-
-# checkSums %>% table %>% as.data.frame %>% select(Freq) %>% summary # All return `replicates`. There are exactly `replicates` of each combination; each combination uniquely identified by a checksum.
-
 # Question of how many populations to simulate? {# setting combinations} x {# replicates}, or just {# replicates} applied to each setting combination? 
 # If the former:
 
