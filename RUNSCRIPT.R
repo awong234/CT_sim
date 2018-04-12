@@ -14,7 +14,7 @@
 
 library(doParallel)
 
-source('build.cluster.alt.R')
+source('build.cluster.R')
 source('simSCR.R')
 source('functionsSQL.R')
 
