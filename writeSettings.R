@@ -1,5 +1,4 @@
 library(dplyr)
-library(foreach)
 
 # Settings for simulations
 # This will be a data frame with 1 row per task, and columns specifying simulation settings. 
@@ -72,13 +71,15 @@ settings = uniqueSettings[rep(seq(nrow(uniqueSettings)), replicates),]
 
 # Check to see that there are exactly `replicates` duplicates - note; apply coerces to matrix, so it won't be the same as slicing off a row:
 
-checkSums = apply(X = settings,MARGIN = 1, FUN = digest::sha1) 
+# checkSums = apply(X = settings,MARGIN = 1, FUN = digest::sha1) 
 
-checkSums %>% table %>% as.data.frame %>% select(Freq) %>% summary # All return `replicates`. There are exactly `replicates` of each combination; each combination uniquely identified by a checksum.
+# checkSums %>% table %>% as.data.frame %>% select(Freq) %>% summary # All return `replicates`. There are exactly `replicates` of each combination; each combination uniquely identified by a checksum.
 
 # Question of how many populations to simulate? {# setting combinations} x {# replicates}, or just {# replicates} applied to each setting combination? 
 # If the former:
 
-settings %>% mutate(seeds = seq(1,nrow(.))) # One seed for {every settings combo} x {every replicate} ; a unique number 
+settings = settings %>% mutate(seeds = seq(1,nrow(.))) # One seed for {every settings combo} x {every replicate} ; a unique number 
+
+write.csv(settings, file = 'settings.csv', row.names = F)
 
 # If the latter, the population simulation will have to be rewritten; since the state space changes depending on the design, different populations will result even with a particular seed.
