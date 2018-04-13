@@ -12,7 +12,7 @@ There are a few steps involved in simulating occupancy & SCR data, outlined belo
 
 We demonstrate each of these in the document below.
 
-# Simulation of activity centers
+# Population simulation
 
 Animal activity centers are simulated to be uniformly distributed across <a href="https://www.codecogs.com/eqnedit.php?latex=\mathcal{S}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\mathcal{S}" title="\mathcal{S}" /></a>, which is the state space of all possible locations for the animal activity centers that could have generated the data. 
 
@@ -36,7 +36,7 @@ You will notice that this portion of the script is dependent upon `X`, which is 
 
 ![](https://github.com/awong234/CT_sim/blob/master/rmd/simDemo_files/figure-html/unnamed-chunk-3-1.png)
 
-![](simDemo_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+
 
 The horizontal and vertical lines are the boundaries of this state space 
 <a href="https://www.codecogs.com/eqnedit.php?latex=\mathcal{S}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\mathcal{S}" title="\mathcal{S}" /></a>. 
@@ -48,3 +48,32 @@ It is necessary to specify a state space that is large enough to make this assum
 <a href="https://www.codecogs.com/eqnedit.php?latex=\sigma" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\sigma" title="\sigma" /></a> 
 is the "range" of an animal's activity center, then we usually take a buffer larger than this - in our case, we have selected 
 <a href="https://www.codecogs.com/eqnedit.php?latex=3\sigma" target="_blank"><img src="https://latex.codecogs.com/gif.latex?3\sigma" title="3\sigma" /></a>. 
+
+Note that the state space can easily be *larger* than this, but after a while it just adds unnecessary computation (animals 10 sigma away surely won't be captured, ever). 
+
+## Simulating the activity centers
+
+Once the state space has been defined, it is simple to simulate uniformly distributed animals. We conventionally use the `runif()` function to draw random uniform variates.
+
+
+```r
+set.seed(1)
+N = 120
+s = cbind(
+  runif(N, min(X[,1])-buff, max(X[,1])+buff), 
+  runif(N, min(X[,2])-buff, max(X[,2])+buff)
+  )
+```
+
+I've broken up the lines so you might see what commands do what. First, we specify `N = 120`, saying we want 120 activity centers in the region. Then we `cbind` two things: 
+
+* Random uniform selection of x positions
+* Random uniform selection of y positions. 
+
+`runif()` takes three arguments; the first is the number of random draws we want (N), the second is the lower limit of the range, and the third is the upper limit of the range. We specify the lower limit to be the minimum of the `X` (traps) minus the buffer, and the upper limit is the maximum of the traps plus a buffer, in both the x (indexed by `X[,1]`) and y (indexed by `X[,2]`)
+
+Now that we've run that, let's take a look at those positions.
+
+![](simDemo_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+I've made the activity centers in `s` x's.
