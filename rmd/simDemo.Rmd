@@ -24,7 +24,7 @@ K=10
 buff=3
 thinning.rate1 = 0.7
 thinning.rate2=0.7
-grid.space=0.5
+grid.space=0.1
 
 
 ```
@@ -129,7 +129,9 @@ ggplot() +
 
 I've made the activity centers in `s` x's. That's it! We have simulated the animal activity centers. Do note that this is *not* the positions of the animals themselves, just the point at which they are most likely to be found. 
 
-# Computing the distance matrix between `s` and `X`. 
+# Simulating data
+
+## Computing the distance matrix between `s` and `X`. 
 
 The distance between each element of `s` and `X` tells us about the probability that an animal will be captured. The basic assumption is that animal activity centers that are located closer to traps are more likely to be captured than animals with activity centers further away. Conversely, animals with a *lot* of captures in a particular set of traps relative to other traps *probably* have activity centers close to those traps - this is the basis for the estimation of `s`, `sigma`, and `p_0`, we try to find the values of these that make the most sense given what we have observed. 
 
@@ -195,6 +197,7 @@ for(i in 1:N){ # For each individual
    for(k in 1:K){ # For each occasion
      
      y.use[i,j,k]=rpois(1,lamd[i,j]) # How many times did individual i use pixel j?
+     
    }
  }
 }
@@ -221,9 +224,11 @@ ggplot() +
 
 ```
 
-In the image above, I've reformatted the traps to be white triangles, and activity centers to be red circles. We can see that expected use is greater where there are a bunch of activity centers clustered close together, and drops off with distance. This makes perfect sense. Note that this is *expectation* in the statistical sense as well as colloquial sense; illustrated are the mean values that we should expect to see in simulation. Since we are simulating Poisson random variables, the variance is equal to the mean. 
+In the image above, I've reformatted the traps to be white triangles, and activity centers to be red circles. We can see that expected use is greater where there are a bunch of activity centers clustered close together, and drops off with distance. This makes perfect sense. Note that this is *expectation* in the statistical sense as well as colloquial sense; illustrated are the mean values that we should expect to see in simulation. Since we are simulating Poisson random variables, the variance is equal to the mean. Also, keep in mind that this is `lam.j` used in calculating expected occupancy.
 
-Turning now to the `y.use` that we simulated: we used the *expected* intensity as the mean for the simulation. We use `rpois()`, which takes two arguments -- how many random variables to simulate, and the mean intensity of the Poisson distribution. We plug in the `lamd` into the second argument, and simulate one random outcome per pixel grid. This is how it looks SIMULATED for one occasion
+Turning now to the `y.use` that we simulated: we used the *expected* intensity as the mean for the simulation. We use `rpois()`, which takes two arguments -- how many random variables to simulate, and the mean intensity of the Poisson distribution. We plug in the `lamd` into the second argument, and simulate one random outcome per pixel grid. This is how it looks SIMULATED for a bunch of occasions conditional on the activity centers we've already generated. Simulation is a great way to observe the variability in your model that may be difficult to convey with variances and model assumptions. 
+
+In the below plot, the black areas from the expected intensity should nearly always be black, and the bright areas are almost always bright. 
 
 ```{r, eval = F}
 for(K in 1:K){
@@ -254,6 +259,83 @@ files = files[order(matches)]
 imgs = magick::image_read(files)
 anim = image_animate(imgs, fps = 2)
 image_write(anim, path = 'anim1.gif', format = 'gif')
+
+```
+
+![](simDemo_files/anim1.gif)
+
+![](https://github.com/awong234/CT_sim/blob/master/rmd/simDemo_files/anim1.gif)
+
+
+## Estimating total occupancy on the landscape
+
+Given what we have obtained we should be able to say something about total occupancy on the landscape. Conceptually, this is
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=\psi_g&space;&=&space;1&space;-&space;(1-p_g)^K" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\psi_g&space;&=&space;1&space;-&space;(1-p_g)^K" title="\psi_g &= 1 - (1-p_g)^K" /></a>
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=p_g&space;=&space;1&space;-&space;\exp(\lambda_{g})" target="_blank"><img src="https://latex.codecogs.com/gif.latex?p_g&space;=&space;1&space;-&space;\exp(\lambda_{g})" title="p_g = 1 - \exp(\lambda_{g})" /></a>
+
+<a href="https://www.codecogs.com/eqnedit.php?latex=\lambda_{g}&space;=&space;\sum_{i=1}^N&space;\lambda_0&space;*&space;\exp(-\frac{\text{dist}(g,s_i)^2}{\sigma^2})" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\lambda_{g}&space;=&space;\sum_{i=1}^N&space;\lambda_0&space;*&space;\exp(-\frac{\text{dist}(g,s_i)^2}{\sigma^2})" title="\lambda_{g} = \sum_{i=1}^N \lambda_0 * \exp(-\frac{\text{dist}(g,s_i)^2}{\sigma^2})" /></a>
+
+Where, `g` is a grid pixel, `s_i` an activity center location, `lambda_grid` the total expected use intensity summed over all individuals, `p` the expected probability of use (again over all individuals), and finally `psi` is the expected probability of occupancy after `K` occasions.
+
+In short, lambda increases when `s_i` is closest to pixel `g`, and the sum over all individuals (`lambda_g`) will be greater when more individuals are closer to pixel `g`.
+
+Probability of use decreases with decreasing `lambda_g`, and trends toward 1 when `lambda_g` is large; that makes sense. 
+
+Finally, probability of occupancy increases with increasing `p_g`, as well as more occasions `K`.
+
+The code to perform this is as follows (again, slightly adapted for clarity):
+
+```{r, eval = F, echo = T}
+
+lamd = lam0*exp(-D_grid*D_grid/(2*sigma*sigma)) # lam0, D_grid, sigma all defined earlier.
+lam.j = colSums(lamd) # Sum over all individuals - this is the figure of expected use above.
+p.grid = 1-exp(-lam.j) #Calculate probability of use per pixel
+psi.grid = 1-(1-p.grid)^K # Calcualte psi per pixel
+
+```
+
+With the data that we simulate next, we would like to estimate this total occupancy (under an occupancy framework) and N (under SCR) as closely as possible, and see which designs are best for these purposes.
+
+## Simulating occupancy and SCR data
+
+The code for simulating the occupancy data thins the realized use by a certain amount `thinning.rate1`. Since we didn't simulate use at the trap locations before (the `simSCR` script does it all at the same time), we'll do it here. Here I use the `D_traps` object for distances instead of `D_grid`, since we're only interested in distances between traps and the activity centers for the simulation of use here. I include that once again for clarity.
+
+```{r,echo = T}
+
+D_traps = e2dist(s, X)   # compute distance between each activity center and each trap
+
+# use intensity AT THE TRAPS
+lamd<- lam0*exp(-D_traps*D_traps/(2*sigma*sigma))
+J = nrow(X)
+
+# Simulate USE history of each pixel according to a Poisson use model
+# This is at the TRAPS.
+y.use <-array(0,dim=c(N,J,K))
+
+for(i in 1:N){ # For each individual
+  
+ for(j in 1:J){ # For each trap
+   
+   for(k in 1:K){ # For each occasion
+     
+     y.use[i,j,k]=rpois(1,lamd[i,j]) # How many times did individual i use trap j?
+     
+   }
+ }
+}
+
+# Simulate detections (for occupancy) and then individual identification (for SCR)
+y.det<- y.scr <-array(0,dim=c(N,J,K))
+for(i in 1:N){
+ for(j in 1:J){
+   for(k in 1:K){
+     y.det[i,j,k]=rbinom(1, y.use[i,j,k], prob=thinning.rate1)
+     y.scr[i,j,k]=rbinom(1, y.det[i,j,k], prob=thinning.rate2)
+   }
+ }
+}
 
 ```
 
