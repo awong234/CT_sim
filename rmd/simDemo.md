@@ -98,6 +98,8 @@ Above, I calculate distances between the activity centers and traps (`X`), and t
 
 The function `e2dist()` takes two arguments, a set of points on one side, and another set of points on the other. It finds pairwise distances, such that the output is a matrix with rows equal to the rows of the first argument, and columns equal to the rows of the second argument. A simple example, we'll find the distance between four points:
 
+![](https://github.com/awong234/CT_sim/blob/master/rmd/simDemo_files/figure-html/unnamed-chunk-7-1.png)
+
 
 ```r
 # Some example points
@@ -133,6 +135,8 @@ e2dist(examplePoints1, examplePoints2)
 ## [3,] 1.414214 1.000000
 ```
 
+
+
 Notice that there are three rows of the output matrix, and two columns; just as there are three rows in `examplePoints1` and two rows in `examplePoints2`. The output just has the distance from the first point in `examplePoints1` to the first point in `examplePoints2` in the `[1,1]` position. The distance from the second point in `examplePoints1` and the first point in `examplePoints2` is in the position `[1,2]`. So on and so forth. NOTE that unlike other distance functions like `dist()`, this does not calculate *all* pairwise distances, meaning that only distance between the first and second sets are calculated. `dist()` would give a triangular matrix with all distances between all points. 
 
 ## Simulating use 
@@ -140,11 +144,33 @@ Notice that there are three rows of the output matrix, and two columns; just as 
 Now that we have distances between traps and activity centers, as well as distances between the grid and activity centers, we can do more. 
 
 
+```r
+# use intensity
+lamd<- lam0*exp(-D_grid*D_grid/(2*sigma*sigma))
+J = nrow(Xgrid)
+# Simulate USE history of each pixel according to a Poisson use model
+# This is on the GRID, not at the traps.
+y.use <-array(0,dim=c(N,J,K))
+
+for(i in 1:N){ # For each individual
+  
+ for(j in 1:J){ # For each pixel on the grid
+   
+   for(k in 1:K){ # For each occasion
+     
+     y.use[i,j,k]=rpois(1,lamd[i,j]) # How many times did individual i use pixel j?
+   }
+ }
+}
+```
 
 (Note: I've again taken the liberty of splitting up the functions a little bit)
 
 Okay so in the above, we first make a matrix `lamd`, which is the *expected* intensity of use at every pixel on the landscape. What does this look like? 
 
+![](https://github.com/awong234/CT_sim/blob/master/rmd/simDemo_files/figure-html/unnamed-chunk-9-1.png)
+
 ![](simDemo_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
-In the image above, we can see that expected use is greater where there are a bunch of activity centers clustered close together, and drops off with distance. This makes perfect sense.
+In the image above, I've reformatted the traps to be white triangles, and activity centers to be red circles. We can see that expected use is greater where there are a bunch of activity centers clustered close together, and drops off with distance. This makes perfect sense. Note that this is *expectation* in the statistical sense as well as colloquial sense; illustrated are the mean values that we should expect to see in simulation. Since we are simulating Poisson random variables, the variance is equal to the mean. 
+

@@ -8,6 +8,7 @@ output:
 library(ggplot2)
 library(dplyr)
 library(viridis)
+library(magick)
 knitr::opts_chunk$set(echo = F)
 
 e2dist=function (x, y) {
@@ -145,6 +146,8 @@ Above, I calculate distances between the activity centers and traps (`X`), and t
 
 The function `e2dist()` takes two arguments, a set of points on one side, and another set of points on the other. It finds pairwise distances, such that the output is a matrix with rows equal to the rows of the first argument, and columns equal to the rows of the second argument. A simple example, we'll find the distance between four points:
 
+![](https://github.com/awong234/CT_sim/blob/master/rmd/simDemo_files/figure-html/unnamed-chunk-7-1.png)
+
 ```{r, echo = T}
 # Some example points
 examplePoints1 = rbind(c(-1,-1), c(0,0), c(0,1))
@@ -169,13 +172,15 @@ e2dist(examplePoints1, examplePoints2)
 
 ```
 
+
+
 Notice that there are three rows of the output matrix, and two columns; just as there are three rows in `examplePoints1` and two rows in `examplePoints2`. The output just has the distance from the first point in `examplePoints1` to the first point in `examplePoints2` in the `[1,1]` position. The distance from the second point in `examplePoints1` and the first point in `examplePoints2` is in the position `[1,2]`. So on and so forth. NOTE that unlike other distance functions like `dist()`, this does not calculate *all* pairwise distances, meaning that only distance between the first and second sets are calculated. `dist()` would give a triangular matrix with all distances between all points. 
 
 ## Simulating use 
 
 Now that we have distances between traps and activity centers, as well as distances between the grid and activity centers, we can do more. 
 
-```{r}
+```{r, echo = T}
 # use intensity
 lamd<- lam0*exp(-D_grid*D_grid/(2*sigma*sigma))
 J = nrow(Xgrid)
@@ -199,7 +204,9 @@ for(i in 1:N){ # For each individual
 
 Okay so in the above, we first make a matrix `lamd`, which is the *expected* intensity of use at every pixel on the landscape. What does this look like? 
 
-```{r}
+![](https://github.com/awong234/CT_sim/blob/master/rmd/simDemo_files/figure-html/unnamed-chunk-9-1.png)
+
+```{r, echo = F}
 gridLamd = cbind.data.frame(Xgrid, colSums(lamd)) %>% rename(x = Var1, y = Var2, eLamd = `colSums(lamd)`)
 
 ggplot() + 
@@ -214,4 +221,39 @@ ggplot() +
 
 ```
 
-In the image above, we can see that expected use is greater where there are a bunch of activity centers clustered close together, and drops off with distance. This makes perfect sense.
+In the image above, I've reformatted the traps to be white triangles, and activity centers to be red circles. We can see that expected use is greater where there are a bunch of activity centers clustered close together, and drops off with distance. This makes perfect sense. Note that this is *expectation* in the statistical sense as well as colloquial sense; illustrated are the mean values that we should expect to see in simulation. Since we are simulating Poisson random variables, the variance is equal to the mean. 
+
+Turning now to the `y.use` that we simulated: we used the *expected* intensity as the mean for the simulation. We use `rpois()`, which takes two arguments -- how many random variables to simulate, and the mean intensity of the Poisson distribution. We plug in the `lamd` into the second argument, and simulate one random outcome per pixel grid. This is how it looks SIMULATED for one occasion
+
+```{r, eval = F}
+for(K in 1:K){
+  
+  gridLamd = cbind.data.frame(Xgrid, colSums(y.use[,,K]))
+  colnames(gridLamd) = c('x', 'y', 'eLamd')
+  
+  Cairo::Cairo(file = paste0('img', K,'.png'), dpi = 100)
+  print(
+  ggplot() + 
+    geom_raster(data = gridLamd, aes(x = x, y = y, fill = eLamd)) + 
+    scale_fill_viridis(option = "A", limits = c(0,20), name = "Realized Use") + 
+    geom_point(data = X, aes(x = x, y = y), shape = 24, color = 'black', fill = 'white') + 
+    geom_point(data = s, aes(x = x, y = y), shape = 21, color = 'black', fill = 'red') + 
+    xlab("X") + ylab("Y") + 
+    geom_vline(xintercept = c(xmin, xmax)) + 
+    geom_hline(yintercept = c(ymin, ymax)) + 
+    coord_equal() + theme_bw()
+  )
+  dev.off()
+  
+}
+
+files = dir(pattern = '.png')
+m = regexpr(text = files, pattern = '(\\d+)')
+(matches = regmatches(x = files, m = m) %>% as.integer)
+files = files[order(matches)]
+imgs = magick::image_read(files)
+anim = image_animate(imgs, fps = 2)
+image_write(anim, path = 'anim1.gif', format = 'gif')
+
+```
+
