@@ -51,6 +51,7 @@ You will notice that this portion of the script is dependent upon `X`, which is 
 
 ggplot() + 
   geom_point(aes(x = X[,1], y = X[,2])) + 
+  xlab("X") + ylab("Y") + 
   geom_vline(xintercept = c(xmin, xmax)) + 
   geom_hline(yintercept = c(ymin, ymax)) + 
   coord_equal() + theme_bw()
