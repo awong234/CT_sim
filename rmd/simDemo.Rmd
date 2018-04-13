@@ -83,9 +83,7 @@ The horizontal and vertical lines are the boundaries of this state space
 <a href="https://www.codecogs.com/eqnedit.php?latex=\mathcal{S}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\mathcal{S}" title="\mathcal{S}" /></a>. 
 By setting these boundaries, we basically state that any animal activity centers *outside* of 
 <a href="https://www.codecogs.com/eqnedit.php?latex=\mathcal{S}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\mathcal{S}" title="\mathcal{S}" /></a> 
-do not have an appreciable probability of being detected *within* 
-<a href="https://www.codecogs.com/eqnedit.php?latex=\mathcal{S}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\mathcal{S}" title="\mathcal{S}" /></a>. 
-It is necessary to specify a state space that is large enough to make this assumption hold true; we usually do this by specifying a buffer around the traps, defined by the `buff` object. If 
+do not have an appreciable probability of being detected at our traps. It is necessary to specify a state space that is large enough to make this assumption hold true; we usually do this by specifying a buffer around the traps, defined by the `buff` object. If 
 <a href="https://www.codecogs.com/eqnedit.php?latex=\sigma" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\sigma" title="\sigma" /></a> 
 is the "range" of an animal's activity center, then we usually take a buffer larger than this - in our case, we have selected 
 <a href="https://www.codecogs.com/eqnedit.php?latex=3\sigma" target="_blank"><img src="https://latex.codecogs.com/gif.latex?3\sigma" title="3\sigma" /></a>. 
@@ -135,7 +133,7 @@ I've made the activity centers in `s` x's. That's it! We have simulated the anim
 
 The distance between each element of `s` and `X` tells us about the probability that an animal will be captured. The basic assumption is that animal activity centers that are located closer to traps are more likely to be captured than animals with activity centers further away. Conversely, animals with a *lot* of captures in a particular set of traps relative to other traps *probably* have activity centers close to those traps - this is the basis for the estimation of `s`, `sigma`, and `p_0`, we try to find the values of these that make the most sense given what we have observed. 
 
-```{r}
+```{r, echo = T}
 D_traps = e2dist(s, X)   # compute distance between each activity center and each trap
 D_grid = e2dist(s, Xgrid)
 ```
@@ -182,7 +180,7 @@ Notice that there are three rows of the output matrix, and two columns; just as 
 
 Now that we have distances between traps and activity centers, as well as distances between the grid and activity centers, we can do more. 
 
-```{r, echo = T}
+```{r, echo = T, cache = T}
 # use intensity
 lamd<- lam0*exp(-D_grid*D_grid/(2*sigma*sigma))
 J = nrow(Xgrid)
@@ -273,7 +271,7 @@ Given what we have obtained we should be able to say something about total occup
 
 <a href="https://www.codecogs.com/eqnedit.php?latex=\psi_g&space;&=&space;1&space;-&space;(1-p_g)^K" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\psi_g&space;&=&space;1&space;-&space;(1-p_g)^K" title="\psi_g &= 1 - (1-p_g)^K" /></a>
 
-<a href="https://www.codecogs.com/eqnedit.php?latex=p_g&space;=&space;1&space;-&space;\exp(\lambda_{g})" target="_blank"><img src="https://latex.codecogs.com/gif.latex?p_g&space;=&space;1&space;-&space;\exp(\lambda_{g})" title="p_g = 1 - \exp(\lambda_{g})" /></a>
+<a href="https://www.codecogs.com/eqnedit.php?latex=p_g&space;=&space;1&space;-&space;\exp(-\lambda_{g})" target="_blank"><img src="https://latex.codecogs.com/gif.latex?p_g&space;=&space;1&space;-&space;\exp(-\lambda_{g})" title="p_g = 1 - \exp(-\lambda_{g})" /></a>
 
 <a href="https://www.codecogs.com/eqnedit.php?latex=\lambda_{g}&space;=&space;\sum_{i=1}^N&space;\lambda_0&space;*&space;\exp(-\frac{\text{dist}(g,s_i)^2}{\sigma^2})" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\lambda_{g}&space;=&space;\sum_{i=1}^N&space;\lambda_0&space;*&space;\exp(-\frac{\text{dist}(g,s_i)^2}{\sigma^2})" title="\lambda_{g} = \sum_{i=1}^N \lambda_0 * \exp(-\frac{\text{dist}(g,s_i)^2}{\sigma^2})" /></a>
 
