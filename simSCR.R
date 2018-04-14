@@ -6,7 +6,9 @@ e2dist=function (x, y) {
 
 simSCR<- function(D = 0.83333,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 0.7,
           thinning.rate2=0.7,grid.space=0.5, seed = NULL){
-# N = population size on the state-space defined by "buff" (see below)
+
+# Density per square unit of the state-space. Then N = round(D*area)
+#    N = population size on the state-space defined by "buff" (see below)
 # lam0 = baseline "use" intensity
 # sigma = scale parameter of SCR detection function
 # K = number of occasions to sample (nights)
