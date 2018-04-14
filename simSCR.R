@@ -4,7 +4,7 @@ e2dist=function (x, y) {
   matrix(dvec, nrow = nrow(x), ncol = nrow(y), byrow = F)
 }
 
-simSCR<- function(N=120,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 0.7,
+simSCR<- function(D = 0.83333,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 0.7,
           thinning.rate2=0.7,grid.space=0.5, seed = NULL){
 # N = population size on the state-space defined by "buff" (see below)
 # lam0 = baseline "use" intensity
@@ -26,6 +26,10 @@ simSCR<- function(N=120,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 0.7,
    xmax<- max(X[,1])+buff
    ymin<- min(X[,2])-buff
    ymax<- max(X[,2])+buff
+
+area<- (ymax-ymin)*(xmax-xmin)
+N<- round(D*area,0)
+
    # Make a fine grid for computing average occupancy over the state-space
     Xgrid<- expand.grid(seq(xmin,xmax,grid.space), seq(ymin,ymax,grid.space))
 
