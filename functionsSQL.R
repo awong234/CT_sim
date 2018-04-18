@@ -140,3 +140,65 @@ testSQL = function(reservedTasks = integer(0)){
   
 }
 
+registerUser = function(update = F){
+  
+  name = readline("Please enter your netID: ")
+  
+  userName = tolower(name)
+  
+  if(update){ # If mistake in user name
+    con = dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql4.gear.host;Database=registerusers;Uid=registerusers;Pwd=Zh4p92?frN2_")
+    
+    test = NULL
+    while(is.null(test)){
+      
+      test = tryCatch(expr = {
+        dbExecute(conn = con, statement = paste0("UPDATE registerusers SET userName = \'", userName, "\'", " WHERE machineName = ", "\'", Sys.info()['nodename']))},
+        error = function(e){
+          message("Another user has a lock on the server; waiting two seconds to retry . . .")
+          Sys.sleep(2)
+        }
+      )
+    }
+    
+    message("You have updated your user name.")
+    
+    dbDisconnect()
+  }
+  
+  con = dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql4.gear.host;Database=registerusers;Uid=registerusers;Pwd=Zh4p92?frN2_")
+  
+  # deletes records with null values for user name
+  # dbExecute(conn = con, statement = "DELETE FROM registerusers WHERE userName = \'\'")
+  
+  table = dbReadTable(conn = con, name = 'registerusers')
+  
+  if( # Basically test if Sys.info()['nodename'] and userName combination in table already.
+    any(
+      apply(X = table, MARGIN = 1, FUN = function(x){all((c(Sys.info()['nodename'], userName) == x))})
+    )
+  ){
+    message("You have already registered this computer!")
+    dbDisconnect(conn = con)
+    return(userName)}else{
+      
+      SQL_statement = paste0("INSERT INTO registerusers (machineName, userName) VALUES (", "\'", Sys.info()['nodename'], "\', ", "\'", userName, "\')")
+      
+      test = NULL
+      while(is.null(test)){
+        test = tryCatch(expr = {dbExecute(conn = con, statement = SQL_statement)},
+          error = function(e){
+            message("Another user has a lock on the server; waiting two seconds to retry . . .")
+            Sys.sleep(2)
+          }
+        )
+      }
+      
+      dbDisconnect(conn = con)
+      
+      message("Thank you for registering!")
+      
+      return(userName)
+    }
+  
+}
