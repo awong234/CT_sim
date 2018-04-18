@@ -32,7 +32,7 @@ reserveTasks = function(numTasks = NULL){
     test = tryCatch(expr = {dbGetQuery(con, 
                                        statement = statement)},
                     error = function(e){
-                      message("Another user has a lock on the server; waiting two seconds to retry . . .")
+                      message(e)
                       # Wait a few seconds to retry...
                       Sys.sleep(2)
                     }
@@ -45,7 +45,7 @@ reserveTasks = function(numTasks = NULL){
 
     statement = paste0("UPDATE tasklistntres SET timeStarted = ", as.integer(Sys.time()), " WHERE taskID IN (", toString(reservedTasks), ")")
     
-    executeWithRestart(SQL_statement = statement)
+    executeWithRestart(SQL_statement = statement, con = con)
     
     return(reservedTasks)}
   
@@ -56,14 +56,14 @@ reserveTasks = function(numTasks = NULL){
   
   statement = paste0("UPDATE TOP (", numTasks, ") tasklistntres SET inProgress = 1, owner = \'", Sys.info()['nodename'], "\', timeStarted = ", as.integer(Sys.time()), " WHERE inProgress = 0 AND completed = 0")
   
-  executeWithRestart(SQL_statement = statement)
+  executeWithRestart(SQL_statement = statement, con = con)
   
   test = NULL
   while(is.null(test)){
     test = tryCatch(
       expr = {reservedTasks = dbGetQuery(con, statement = paste0("SELECT * FROM tasklistntres WHERE inProgress = 1 AND owner = ", "\'", Sys.info()['nodename'], "\'"))[,1]},
       error = function(e){
-        message("Another user has a lock on the server; waiting two seconds to retry . . .")
+        message(e)
         # Wait a few seconds to retry...
         Sys.sleep(2)
       }
@@ -97,7 +97,7 @@ updateTaskCompleted = function(reservedTasks = NULL){
   
   statement = paste0("UPDATE tasklistntres SET inProgress = 0, completed = 1, timeEnded = ", as.integer(Sys.time()), " WHERE taskID IN (", toString(reservedTasks), ");")
 
-  executeWithRestart(SQL_statement = statement)
+  executeWithRestart(SQL_statement = statement, con = con)
   
   # # # # Shut down connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
@@ -193,7 +193,7 @@ registerUser = function(update = F){
   
 }
 
-executeWithRestart = function(SQL_statement){
+executeWithRestart = function(SQL_statement, con){
   
   test = NULL
   
@@ -201,7 +201,7 @@ executeWithRestart = function(SQL_statement){
   
       test = tryCatch(expr = {dbExecute(conn = con, statement = SQL_statement)},
                     error = function(e){
-                      message("Another user has a lock on the server; waiting two seconds to retry . . .")
+                      message(e)
                       Sys.sleep(2)
                     }
     )
