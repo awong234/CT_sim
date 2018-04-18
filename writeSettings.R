@@ -48,6 +48,10 @@ thinRate1 = c(0.7)
 # thinning.rate2
 thinRate2 = c(0.7)
 
+# Grid spacing
+
+gridSpace = c(0.5)
+
 
 # Expand all combos ---------------------------------------------------------------------------------------------------
 
@@ -63,7 +67,8 @@ settings = expand.grid(nTraps = nTraps,
                        D = D, 
                        buff = buff, 
                        thinRate1 = thinRate1, 
-                       thinRate2 = thinRate2)
+                       thinRate2 = thinRate2, 
+                       grid.space = gridSpace)
 
 attr(settings, which = c("out.attrs")) = NULL
 
