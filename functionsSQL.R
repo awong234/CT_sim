@@ -25,19 +25,10 @@ reserveTasks = function(numTasks = NULL){
   
   # So, just take those tasks again
   
-  test = NULL
-  while(is.null(test)){
-    
-    # evaluates to a table upon success. Will evaluate to NULL upon failure.
-    test = tryCatch(expr = {dbGetQuery(con, statement = paste0("SELECT * FROM tasklistntres WHERE owner = ", "\'", Sys.info()['nodename'], "\'", " AND inProgress = 1 AND completed = 0"))},
-                    error = function(e){
-                      message("Another user has a lock on the server; waiting two seconds to retry . . .")
-                      # Wait a few seconds to retry...
-                      Sys.sleep(2)
-                    }
-    )
-  }
+  statement = paste0("SELECT * FROM tasklistntres WHERE owner = ", "\'", Sys.info()['nodename'], "\'", " AND inProgress = 1 AND completed = 0")
   
+  test = executeWithRestart(SQL_statement = statement)
+
   # If some left over from before, set those as reserved tasks to be completed.
   if(nrow(test) > 0){ 
     reservedTasks = test$taskID
@@ -46,22 +37,13 @@ reserveTasks = function(numTasks = NULL){
     return(reservedTasks)}
   
   
-  
   # # # # Query free tasks and reserve a number of them # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
   if(is.null(numTasks)){numTasks = parallel::detectCores()-1} # Default numTasks to number of cores.
   
-  test = NULL
-  while(is.null(test)){
-    
-    test = tryCatch(expr = {dbExecute(con, statement = paste0("UPDATE TOP (", numTasks, ") tasklistntres SET inProgress = 1, owner = \'", Sys.info()['nodename'], "\' WHERE inProgress = 0 AND completed = 0"))},
-                    error = function(e){    
-                      message("Another user has a lock on the server; waiting two seconds to retry . . .")
-                      # Wait a few seconds to retry...
-                      Sys.sleep(2)
-                    }
-    )
-  }
+  statement = paste0("UPDATE TOP (", numTasks, ") tasklistntres SET inProgress = 1, owner = \'", Sys.info()['nodename'], "\' WHERE inProgress = 0 AND completed = 0")
+  
+  executeWithRestart(SQL_statement = statement)
   
   reservedTasks = dbGetQuery(con, statement = paste0("SELECT * FROM tasklistntres WHERE inProgress = 1 AND owner = ", "\'", Sys.info()['nodename'], "\'"))[,1]
   
@@ -88,19 +70,11 @@ updateTaskCompleted = function(reservedTasks = NULL){
   
   # Must have saved these values from reserveTasks()
   
-  # # # # Change values in connected table # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  # # # # Change values in connected table # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   
-  test = NULL
-  while(is.null(test)){
-    
-    test = tryCatch(expr = {dbExecute(conn = con, statement = paste0("UPDATE tasklistntres SET inProgress = 0, completed = 1 WHERE taskID IN (", toString(reservedTasks), ");"))},
-                    error = function(e){
-                      message("Another user has a lock on the server; waiting two seconds to retry . . .")
-                      Sys.sleep(2)
-                    }
-    )
-  }
+  statement = paste0("UPDATE tasklistntres SET inProgress = 0, completed = 1 WHERE taskID IN (", toString(reservedTasks), ");")
   
+  executeWithRestart(SQL_statement = statement)
   
   # # # # Shut down connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
@@ -120,6 +94,8 @@ printDB = function(){ # perform a simple read on the server database
 }
 
 testSQL = function(reservedTasks = integer(0)){
+  
+  # Deprecated - tests fulfilled conditions
   
   # In parallel, reserve and 'analyze' tasks, updating completed tasks
   # concurrently.
@@ -142,26 +118,19 @@ testSQL = function(reservedTasks = integer(0)){
 
 registerUser = function(update = F){
   
-  name = readline("Please enter your netID: ")
-  
-  userName = tolower(name)
-  
   if(update){ # If mistake in user name
+    
+    name = readline("Please enter your netID: ")
+    
+    userName = tolower(name)
+    
     con = dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql4.gear.host;Database=registerusers;Uid=registerusers;Pwd=Zh4p92?frN2_")
     
-    test = NULL
-    while(is.null(test)){
-      
-      test = tryCatch(expr = {
-        dbExecute(conn = con, statement = paste0("UPDATE registerusers SET userName = \'", userName, "\'", " WHERE machineName = ", "\'", Sys.info()['nodename']))},
-        error = function(e){
-          message("Another user has a lock on the server; waiting two seconds to retry . . .")
-          Sys.sleep(2)
-        }
-      )
-    }
+    statement = paste0("UPDATE registerusers SET userName = \'", userName, "\'", " WHERE machineName = ", "\'", Sys.info()['nodename'])
     
-    message("You have updated your user name.")
+    executeWithRestart(SQL_statement = statement)
+    
+    message(paste0("You have updated your user name to ", userName))
     
     dbDisconnect()
   }
@@ -173,26 +142,21 @@ registerUser = function(update = F){
   
   table = dbReadTable(conn = con, name = 'registerusers')
   
-  if( # Basically test if Sys.info()['nodename'] and userName combination in table already.
-    any(
-      apply(X = table, MARGIN = 1, FUN = function(x){all((c(Sys.info()['nodename'], userName) == x))})
-    )
+  if( # Basically test if Sys.info()['nodename'] in table already.
+    Sys.info()['nodename'] %in% table$machineName
   ){
-    message("You have already registered this computer!")
+    name = table$userName[table$machineName == Sys.info()['nodename']]
+    message(paste0("You have already registered this computer under the following user name(s) : ", toString(name)))
     dbDisconnect(conn = con)
-    return(userName)}else{
+    return(name)}else{
+      
+      name = readline("Please enter your netID: ")
+      
+      userName = tolower(name)
       
       SQL_statement = paste0("INSERT INTO registerusers (machineName, userName) VALUES (", "\'", Sys.info()['nodename'], "\', ", "\'", userName, "\')")
       
-      test = NULL
-      while(is.null(test)){
-        test = tryCatch(expr = {dbExecute(conn = con, statement = SQL_statement)},
-          error = function(e){
-            message("Another user has a lock on the server; waiting two seconds to retry . . .")
-            Sys.sleep(2)
-          }
-        )
-      }
+      executeWithRestart(SQL_statement = SQL_statement)
       
       dbDisconnect(conn = con)
       
@@ -201,4 +165,21 @@ registerUser = function(update = F){
       return(userName)
     }
   
+}
+
+executeWithRestart = function(SQL_statement){
+  
+  test = NULL
+  
+  while(is.null(test)){
+  
+      test = tryCatch(expr = {dbExecute(conn = con, statement = SQL_statement)},
+                    error = function(e){
+                      message("Another user has a lock on the server; waiting two seconds to retry . . .")
+                      Sys.sleep(2)
+                    }
+    )
+  }
+  
+  return(test)
 }
