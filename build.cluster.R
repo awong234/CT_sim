@@ -1,4 +1,4 @@
-build.cluster=function(ntraps,clusterdim,spacingin,spacingout,plotit){
+build.cluster=function(ntraps,clusterdim,spacingin,spacingout,plotit = F){
   size=ntraps/(clusterdim^2)
   nfullcluster=floor(size)
   coords=seq(0,spacingin*(clusterdim-1),by=spacingin)
@@ -249,7 +249,7 @@ getxy=function(x,y,m,space){
   return(c(x,y))
 }
 
-build.cluster.alt=function(ntraps,ntrapsC,spacingin,spacingout,plotit){
+build.cluster.alt=function(ntraps,ntrapsC,spacingin,spacingout,plotit = F){
   size=ntraps/ntrapsC
   nfullcluster=floor(size)
   #Build normal clusters
