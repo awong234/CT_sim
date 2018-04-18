@@ -62,11 +62,18 @@ ntraps=120 #Currently works for up to 144 clusters or 144 traps in a single clus
 ntrapsC=c(1,2,3,4,5,6,7,8)#number of traps in a cluster
 spacingin=c(1,1.5) #interior spacing
 spacingout=c(1.5,2.5) #cluster spacing
+buff<- 3
+Nmat<- NULL
 for(i in 1:8){
   for(j in 1:2){
     for(k in 1:2){
       X=build.cluster.alt(ntraps,ntrapsC[i],spacingin[j],
                       spacingout[k],plotit=TRUE)
+      xlim<- c(min(X[,1])-buff, max(X[,1])+buff )      
+      ylim<- c(min(X[,2])-buff, max(X[,2])+buff )
+      area<- (xlim[2]-xlim[1])*(ylim[2]-ylim[1])
+      Nmat<- rbind(Nmat,round(area*D, 0))
+
     }
   }
 }

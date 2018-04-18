@@ -4,25 +4,44 @@ e2dist=function (x, y) {
   matrix(dvec, nrow = nrow(x), ncol = nrow(y), byrow = F)
 }
 
-simSCR<- 
- function(N=120,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 0.7,
+simSCR<- function(D = 0.83333,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 0.7,
           thinning.rate2=0.7,grid.space=0.5, seed = NULL){
-   
+
+# Density per square unit of the state-space. Then N = round(D*area)
+#    N = population size on the state-space defined by "buff" (see below)
+# lam0 = baseline "use" intensity
+# sigma = scale parameter of SCR detection function
+# K = number of occasions to sample (nights)
+# X = trapping array coordinates
+# buff = defines the state space
+# thinning.rate1 = thinning rate to convert use to occupancy data
+# thinning.rate2 = thinning rate to convert occupancy data to SCR data
+# grid.space = spacing of state-space grid points used in likelihood evaluation
+# seed = random number seed
+
+
    # Added for reproducibility
    set.seed(seed)
-   
+
+    # Define the state-space by buffering the traps
    xmin<- min(X[,1])-buff
    xmax<- max(X[,1])+buff
    ymin<- min(X[,2])-buff
    ymax<- max(X[,2])+buff
-   Xgrid<- expand.grid(seq(xmin,xmax,grid.space), seq(ymin,ymax,grid.space))
-   
+
+area<- (ymax-ymin)*(xmax-xmin)
+N<- round(D*area,0)
+
+   # Make a fine grid for computing average occupancy over the state-space
+    Xgrid<- expand.grid(seq(xmin,xmax,grid.space), seq(ymin,ymax,grid.space))
+
    # # simulate USAGE for a population of activity centers
    s<- cbind(runif(N, min(X[,1])-buff,max(X[,1])+buff), runif(N,min(X[,2])-buff,max(X[,2])+buff))
-   D<- e2dist(s,rbind(X,Xgrid) )
+   D<- e2dist(s,rbind(X,Xgrid) )   # compute distance between each activity center and each trap
+   # use intensity
    lamd<- lam0*exp(-D*D/(2*sigma*sigma))
    J<- nrow(X) + nrow(Xgrid)
-   # Simulate encounter history
+   # Simulate USE history of each pixel according to a Poisson use model
    y.use <-array(0,dim=c(N,J,K))
    for(i in 1:N){
      for(j in 1:J){
@@ -32,7 +51,7 @@ simSCR<-
      }
    }
    y.use<- y.use[1:N, 1:nrow(X), 1:K]
-   
+
    # compute total occupancy on the landscape by evaluating on a fine grid (Xgrid above)
    lam.grid<- lamd[1:N, (nrow(X)+1):J]
    lam.gridJ=colSums(lam.grid)
@@ -40,12 +59,13 @@ simSCR<-
    psi.grid=1-(1-p.grid)^K
 
    # compute total occupancy probability on the trap locations
+   # This is not used for anything, ignore
    lamd<- lamd[1:N, 1:nrow(X)]
    lamJ=colSums(lamd)
    p=1-exp(-lamJ)
    psi=1-(1-p)^K
-   
-   # Now compute the SCR data:
+
+   # Now compute the SCR and OCC data by thinning the USE frequencies
    J<- nrow(X)
    y.det<- y.scr <-array(0,dim=c(N,J,K))
    for(i in 1:N){
@@ -61,6 +81,7 @@ simSCR<-
    #make occupancy data set
    y.occ=1*(apply(y.det,c(2,3),sum)>0)#site by occasion detections
    y.occ=rowSums(y.occ)#sum over occasions
+
    #remove uncaptured individuals in SCR data set. sort.
    y<- y.scr
    caps=apply(y,1,sum)

@@ -18,6 +18,12 @@ source('build.cluster.R')
 source('simSCR.R')
 source('functionsSQL.R')
 
+# Register user names with computer names
+userName = if(!dir.exists("username.txt")){
+  name = registerUser()
+  write.table(name, file = 'username.txt', row.names = F, col.names = F)
+}else{NULL}
+
 numTasks = detectCores() - 1 # how many concurrent analyses to be done?
 
 registerDoParallel(cores = numTasks) # editable with numTasks
