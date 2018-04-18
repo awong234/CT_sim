@@ -27,22 +27,24 @@ registerDoParallel(cores = numTasks) # editable with numTasks
 
 # Extract Settings ------------------------------------------------------------------------------------
 
+settings = read.csv(file = 'settings.csv')
+
 # Function `assign`s each column in `settings` to an object in the environment
 extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y, pos = 1)}, x = names(what), y = what))}
 
 # Reserve some tasks to be completed.
 reservedTasks = reserveTasks(numTasks = numTasks)
 
-while(reservedTasks > 0){
+while(length(reservedTasks) > 0){
   
-  foreach(i = reservedTasks, .export = c("updateTaskCompleted", "simSCR", "build.cluster.alt", "extract")) %dopar% {
+  items = foreach(i = reservedTasks) %dopar% {
   
     settingsLocal = settings[i,] # Extract settings for task i
     
     extract(settingsLocal) # Assign all components (p0, lam0, etc.) to scoped to FUNCTION environment - won't affect other tasks.
     
     # Generate trap array ---------------------------------------------------------------------------------
-    X = build.cluster.alt(ntraps = nTraps, ntrapsC = ntrapsC, spacingin = spacingin, spacingout = spacingout)
+    X = build.cluster.alt(ntraps = nTraps, ntrapsC = ntrapsC, spacingin = spaceIn, spacingout = spaceOut)
     
     # Simulate activity centers ---------------------------------------------------------------------------
     
@@ -50,9 +52,9 @@ while(reservedTasks > 0){
     # Right now all done in simSCR()
     
     # Simulate encounters ---------------------------------------------------------------------------------
-    scrData = simSCR()
+    scrData = simSCR(D = D, lam0 = lam0, sigma = sigma, K = K, X = X, buff = buff, thinning.rate1 = thinRate1, thinning.rate2 = thinRate2, grid.space = grid.space, seed = seeds)
     
-    return(scrData)
+    # Verified separate settings data passing into function.
     
     # Gather data into analysis tool (occupancy and SCR) --------------------------------------------------
     
