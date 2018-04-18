@@ -37,6 +37,19 @@ N<- round(D*area,0)
 
    # # simulate USAGE for a population of activity centers
    s<- cbind(runif(N, min(X[,1])-buff,max(X[,1])+buff), runif(N,min(X[,2])-buff,max(X[,2])+buff))
+   
+   # ALEC EDITS: rbind(X,Xgrid) results in an error 
+   #  Error in match.names(clabs, names(xi)) : 
+   #  names do not match previous names
+   
+   # This is due to `rbind`ing a matrix to a dataframe with mismatched names.
+   
+   # I am formatting Xgrid as a matrix with no names so rbind
+   # will work. 
+   
+   Xgrid = as.matrix(Xgrid)
+   attr(x = Xgrid, which = 'dimnames') = NULL
+   
    D<- e2dist(s,rbind(X,Xgrid) )   # compute distance between each activity center and each trap
    # use intensity
    lamd<- lam0*exp(-D*D/(2*sigma*sigma))
