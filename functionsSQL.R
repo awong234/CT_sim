@@ -24,16 +24,31 @@ reserveTasks = function(numTasks = NULL){
   # Is your computer 'working on' an event at the time of this check? If so, it never finished from the previous startup.
   
   # So, just take those tasks again
-  
+  test = NULL
   statement = paste0("SELECT * FROM tasklistntres WHERE owner = ", "\'", Sys.info()['nodename'], "\'", " AND inProgress = 1 AND completed = 0")
-  
-  test = executeWithRestart(SQL_statement = statement)
+  while(is.null(test)){
+    
+
+
+    # evaluates to a table upon success. Will evaluate to NULL upon failure.
+    test = tryCatch(expr = {dbGetQuery(con, 
+                                       statement = statement)},
+                    error = function(e){
+                      message("Another user has a lock on the server; waiting two seconds to retry . . .")
+                      # Wait a few seconds to retry...
+                      Sys.sleep(2)
+                    }
+    )
+  }
 
   # If some left over from before, set those as reserved tasks to be completed.
   if(nrow(test) > 0){ 
     reservedTasks = test$taskID
-    # Writing to local copy not necessary, since they should have been registered before.
-    # write.table(x = reservedTasks, file = 'reservedTasks.csv', row.names = F, append = T, sep = ',', col.names = F) 
+    
+    statement = paste0("UPDATE tasklistntres SET timeStarted = ", as.integer(Sys.time()), " WHERE taskID IN (", toString(reservedTasks), ")")
+    
+    executeWithRestart(SQL_statement = statement)
+    
     return(reservedTasks)}
   
   
@@ -41,11 +56,21 @@ reserveTasks = function(numTasks = NULL){
   
   if(is.null(numTasks)){numTasks = parallel::detectCores()-1} # Default numTasks to number of cores.
   
-  statement = paste0("UPDATE TOP (", numTasks, ") tasklistntres SET inProgress = 1, owner = \'", Sys.info()['nodename'], "\' WHERE inProgress = 0 AND completed = 0")
+  statement = paste0("UPDATE TOP (", numTasks, ") tasklistntres SET inProgress = 1, owner = \'", Sys.info()['nodename'], "\', timeStarted = ", as.integer(Sys.time()), " WHERE inProgress = 0 AND completed = 0")
   
   executeWithRestart(SQL_statement = statement)
   
-  reservedTasks = dbGetQuery(con, statement = paste0("SELECT * FROM tasklistntres WHERE inProgress = 1 AND owner = ", "\'", Sys.info()['nodename'], "\'"))[,1]
+  test = NULL
+  while(is.null(test)){
+    test = tryCatch(
+      expr = {reservedTasks = dbGetQuery(con, statement = paste0("SELECT * FROM tasklistntres WHERE inProgress = 1 AND owner = ", "\'", Sys.info()['nodename'], "\'"))[,1]},
+      error = function(e){
+        message("Another user has a lock on the server; waiting two seconds to retry . . .")
+        # Wait a few seconds to retry...
+        Sys.sleep(2)
+      }
+    )
+  }
   
   dbDisconnect(con)
   
@@ -72,7 +97,7 @@ updateTaskCompleted = function(reservedTasks = NULL){
   
   # # # # Change values in connected table # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   
-  statement = paste0("UPDATE tasklistntres SET inProgress = 0, completed = 1 WHERE taskID IN (", toString(reservedTasks), ");")
+  statement = paste0("UPDATE tasklistntres SET inProgress = 0, completed = 1, timeEnded = ", as.integer(Sys.time()), " WHERE taskID IN (", toString(reservedTasks), ");")
   
   executeWithRestart(SQL_statement = statement)
   
@@ -126,29 +151,32 @@ registerUser = function(update = F){
     
     con = dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql4.gear.host;Database=registerusers;Uid=registerusers;Pwd=Zh4p92?frN2_")
     
-    statement = paste0("UPDATE registerusers SET userName = \'", userName, "\'", " WHERE machineName = ", "\'", Sys.info()['nodename'])
+    statement = paste0("UPDATE registerusers SET userName = \'", userName, "\'", " WHERE machineName = ", "\'", Sys.info()['nodename'], "\'")
     
     executeWithRestart(SQL_statement = statement)
     
     message(paste0("You have updated your user name to ", userName))
     
-    dbDisconnect()
+    dbDisconnect(conn = con)
+    
+    return(name)
   }
   
   con = dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql4.gear.host;Database=registerusers;Uid=registerusers;Pwd=Zh4p92?frN2_")
   
-  # deletes records with null values for user name
-  # dbExecute(conn = con, statement = "DELETE FROM registerusers WHERE userName = \'\'")
-  
   table = dbReadTable(conn = con, name = 'registerusers')
   
-  if( # Basically test if Sys.info()['nodename'] in table already.
-    Sys.info()['nodename'] %in% table$machineName
-  ){
+  if(Sys.info()['nodename'] %in% table$machineName){  # Basically test if Sys.info()['nodename'] in table already.
+    
     name = table$userName[table$machineName == Sys.info()['nodename']]
-    message(paste0("You have already registered this computer under the following user name(s) : ", toString(name)))
+    
+    message(paste0("You have registered this computer under the following user name(s) : ", toString(name)))
+    
+    message("Please run again with update = T if there are errors in the user name.")
+    
     dbDisconnect(conn = con)
-    return(name)}else{
+    
+    return(name)}else{ # Fresh entry
       
       name = readline("Please enter your netID: ")
       
@@ -180,6 +208,9 @@ executeWithRestart = function(SQL_statement){
                     }
     )
   }
-  
   return(test)
 }
+
+extract = function(what){
+  invisible(Map(f = function(x,y){assign(x = x, value = y)}, x = names(what), y = what))
+  }
