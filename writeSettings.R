@@ -10,6 +10,9 @@ library(dplyr)
 # Number of traps
 nTraps = c(40, 80, 120)
 
+# Number of traps in a cluster
+ntrapsC = c(1,2,3,4,5,6,7,8)
+
 # Cluster size
 clusterSize = c(2, 3, 4, 5, 6, 7)
 
@@ -49,6 +52,7 @@ thinRate2 = c(0.7)
 # Expand all combos ---------------------------------------------------------------------------------------------------
 
 settings = expand.grid(nTraps = nTraps, 
+                       ntrapsC = ntrapsC, 
                        clusterSize = clusterSize, 
                        spaceIn = spaceIn, 
                        spaceOut = spaceOut, 
