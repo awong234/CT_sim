@@ -151,7 +151,7 @@ registerUser = function(update = F){
     
     statement = paste0("UPDATE registerusers SET userName = \'", userName, "\'", " WHERE machineName = ", "\'", Sys.info()['nodename'], "\'")
     
-    executeWithRestart(SQL_statement = statement)
+    executeWithRestart(SQL_statement = statement, con = con)
     
     message(paste0("You have updated your user name to ", userName))
     
@@ -182,7 +182,7 @@ registerUser = function(update = F){
       
       SQL_statement = paste0("INSERT INTO registerusers (machineName, userName) VALUES (", "\'", Sys.info()['nodename'], "\', ", "\'", userName, "\')")
       
-      executeWithRestart(SQL_statement = SQL_statement)
+      executeWithRestart(SQL_statement = SQL_statement, con = con)
       
       dbDisconnect(conn = con)
       
