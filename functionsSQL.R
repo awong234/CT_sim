@@ -27,8 +27,6 @@ reserveTasks = function(numTasks = NULL){
   test = NULL
   statement = paste0("SELECT * FROM tasklistntres WHERE owner = ", "\'", Sys.info()['nodename'], "\'", " AND inProgress = 1 AND completed = 0")
   while(is.null(test)){
-    
-
 
     # evaluates to a table upon success. Will evaluate to NULL upon failure.
     test = tryCatch(expr = {dbGetQuery(con, 
@@ -210,7 +208,3 @@ executeWithRestart = function(SQL_statement){
   }
   return(test)
 }
-
-extract = function(what){
-  invisible(Map(f = function(x,y){assign(x = x, value = y)}, x = names(what), y = what))
-  }
