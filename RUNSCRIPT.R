@@ -14,9 +14,12 @@
 
 library(doParallel)
 
+source('writeSettings.R')
 source('build.cluster.R')
 source('simSCR.R')
 source('functionsSQL.R')
+
+if(!dir.exists('settings.csv')){writeSettings()}
 
 # Register user names with computer names
 registerUser(update = F) 
@@ -33,7 +36,7 @@ settings = read.csv(file = 'settings.csv')
 extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y, pos = 1)}, x = names(what), y = what))}
 
 # Reserve some tasks to be completed.
-reservedTasks = reserveTasks(numTasks = numTasks)
+# reservedTasks = reserveTasks(numTasks = numTasks)
 
 # DEBUG PURPOSES
 reservedTasks = c(1,5400,930)
