@@ -36,7 +36,7 @@ extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y
 reservedTasks = reserveTasks(numTasks = numTasks)
 
 # DEBUG PURPOSES
-reservedTasks = c(1,2,3)
+reservedTasks = c(1,5400,930)
 
 #while(length(reservedTasks) > 0){
   
