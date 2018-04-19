@@ -3,3 +3,4 @@
 *.Rproj
 /.Rproj*
 username.txt
+localOutput/

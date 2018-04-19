@@ -35,7 +35,10 @@ extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y
 # Reserve some tasks to be completed.
 reservedTasks = reserveTasks(numTasks = numTasks)
 
-while(length(reservedTasks) > 0){
+# DEBUG PURPOSES
+reservedTasks = c(1,2,3)
+
+#while(length(reservedTasks) > 0){
   
   items = foreach(i = reservedTasks) %dopar% {
   
@@ -54,7 +57,11 @@ while(length(reservedTasks) > 0){
     # Simulate encounters ---------------------------------------------------------------------------------
     scrData = simSCR(D = D, lam0 = lam0, sigma = sigma, K = K, X = X, buff = buff, thinning.rate1 = thinRate1, thinning.rate2 = thinRate2, grid.space = grid.space, seed = seeds)
     
+    return(scrData)
+    
     # Verified separate settings data passing into function.
+    
+    # Write components of sim dataset to file?
     
     # Gather data into analysis tool (occupancy and SCR) --------------------------------------------------
     
@@ -66,6 +73,10 @@ while(length(reservedTasks) > 0){
     
     # Write result to output directory of choice . . . 
     
+    if(!dir.exists("localOutput/")){
+      dir.create("localOutput/")
+    }
+    
     # Note completion on server
     updateTaskCompleted(reservedTasks = i)
     
@@ -74,7 +85,7 @@ while(length(reservedTasks) > 0){
     
   }
   
-}
+# }
 
 
 
