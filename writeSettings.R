@@ -83,7 +83,7 @@ writeSettings <- function() {
   
   settings = settings %>% mutate(seeds = seq(1,nrow(.)), taskID = seq(1,nrow(.))) %>% select(taskID, nTraps:seeds) # One seed for {every settings combo} x {every replicate} ; a unique number 
   
-  write.csv(settings, file = 'settings.csv', row.names = F)
+  return(settings)
   
   # If the latter, the population simulation will have to be rewritten; since the state space changes depending on the design, different populations will result even with a particular seed.
 
