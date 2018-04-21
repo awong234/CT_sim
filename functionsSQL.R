@@ -143,7 +143,7 @@ registerUser = function(update = F){
   
   if(update){ # If mistake in user name
     
-    name = readline("Please enter your netID: ")
+    name = readline("Please enter your netID or initials: ")
     
     userName = tolower(name)
     
@@ -170,13 +170,13 @@ registerUser = function(update = F){
     
     message(paste0("You have registered this computer under the following user name(s) : ", toString(name)))
     
-    message("Please run again with update = T if there are errors in the user name.")
+    message("Please run registerUser(update = T) if there are errors in the user name.")
     
     dbDisconnect(conn = con)
     
     return(name)}else{ # Fresh entry
       
-      name = readline("Please enter your netID: ")
+      name = readline("Please enter your netID or initials: ")
       
       userName = tolower(name)
       
@@ -186,7 +186,9 @@ registerUser = function(update = F){
       
       dbDisconnect(conn = con)
       
-      message("Thank you for registering!")
+      message(paste0("Thank you for registering, ", userName, "!"))
+      
+      message("Please run registerUser(update = T) if there are errors in the user name.")
       
       return(userName)
     }
@@ -208,3 +210,6 @@ executeWithRestart = function(SQL_statement, con){
   }
   return(test)
 }
+
+# Register user names with computer names
+registerUser(update = F)

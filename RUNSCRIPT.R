@@ -19,10 +19,7 @@ source('build.cluster.R')
 source('simSCR.R')
 source('functionsSQL.R')
 
-if(!dir.exists('settings.csv')){writeSettings()}
-
-# Register user names with computer names
-registerUser(update = F) 
+settings = writeSettings()
 
 numTasks = detectCores() - 1 # how many concurrent analyses to be done?
 
