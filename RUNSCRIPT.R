@@ -19,15 +19,13 @@ source('build.cluster.R')
 source('simSCR.R')
 source('functionsSQL.R')
 
-settings = writeSettings()
-
 numTasks = detectCores() - 1 # how many concurrent analyses to be done?
 
 registerDoParallel(cores = numTasks) # editable with numTasks
 
 # Extract Settings ------------------------------------------------------------------------------------
 
-settings = read.csv(file = 'settings.csv')
+settings = writeSettings()
 
 # Function `assign`s each column in `settings` to an object in the environment
 extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y, pos = 1)}, x = names(what), y = what))}
