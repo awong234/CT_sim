@@ -4,7 +4,9 @@ The contents here aim to simulate encounters of animals under varied survey desi
 
 The output from the analyses will be compared to obtain the most effective designs for occupancy analysis, SCR analysis, and potentially both. 
 
-**For analysis participants:**
+<mark>For analysis participants:</mark>
+
+**NOTE: I can only guarantee that these functions will work on WINDOWS, particularly the database functions. For those who do not use Windows, I will not effectively be able to debug any issues.**
 
 When the first production run of the procedure is to be implemented, you will need only execute the contents in `RUNSCRIPT.R`. To do so, open the file in R, highlight all of the contents in the file, and hit `run`. 
 
