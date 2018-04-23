@@ -90,7 +90,7 @@ Function to simulate SCR and occupancy data. See the [Wiki page on the function]
 
 ### taskMonitor.R
 
-This is a Shiny app that will automatically launch a browser window. There are three tabs:
+This is a Shiny app that will automatically launch a browser window. The purpose is to monitor the completion of tasks over time and provide a rough estimate of completion time. There are three tabs:
 
 #### Full table
 
