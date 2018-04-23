@@ -1,3 +1,7 @@
+# Install shiny and run this locally to monitor tasks.
+
+# You can view the task list, and other computation performance metrics, as well as anticipated end of analyses.
+
 library(shiny)
 library(odbc)
 library(DBI)
@@ -195,17 +199,17 @@ server = function(input, output, session){
                            pwd = 'Gy435_eN5-Ry')
     
     taskTable = printDBsafe(con = con, name = 'tasklistntres') %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
-                                                                           timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA), 
-                                                                           Duration = ifelse(timeStarted > 0 & timeEnded > 0, (timeEnded - timeStarted)/60, 0))
+                                                                           timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA)
+                                                                          ) %>% arrange(timeStarted)
     dbDisconnect(conn = con)
     
     maxTasks = nrow(taskTable)
     
-    taskTable = taskTable %>% filter(completed == 1 | inProgress == 1) %>% mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% select(taskID, timeStarted, timeEnded, owner) %>% melt(id.vars = c('taskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value)
+    taskTable = taskTable %>% filter(completed == 1 | inProgress == 1) %>% mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin), timeIndex = seq(1,nrow(.))) %>% select(timeStarted, timeEnded, owner, timeIndex) %>% melt(id.vars = c('timeIndex', 'owner')) %>% rename("StartEnd" = variable, "Time" = value)
     
-    lm1 = lm(formula = Time ~ taskID, data = taskTable)
+    lm1 = lm(formula = Time ~ timeIndex, data = taskTable)
     
-    newdata = data.frame('taskID' = seq(1, maxTasks), 'predDate' = NA)
+    newdata = data.frame('timeIndex' = seq(1, maxTasks), 'predDate' = NA)
     
     predictedDates = predict(lm1, newdata = newdata)
     
