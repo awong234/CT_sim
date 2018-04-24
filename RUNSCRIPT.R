@@ -16,12 +16,18 @@
   # Analyze data under OCC
   # Export analysis elements
 
-library(doParallel)
+if(!require(doParallel)){install.packages('doParallel')}
+if(!require(googledrive)){install.packages('googledrive')}
+
+# First time run will take you to a web page to authorize `googledrive` to
+# access your drive account. You will want to make sure to have CT_sim_outputs
+# already in your drive in the top-most directory!
 
 source('writeSettings.R')
 source('build.cluster.R')
 source('simSCR.R')
 source('functionsSQL.R')
+source('uploadOutput.R')
 
 
 # Set up parallel backend. 
@@ -126,6 +132,8 @@ reservedTasks = c(1)
     reservedTasks = reserveTasks(numTasks = 1)
     
   }
+  
+  # Upload results if applicable . . . 
   
 # }
 
