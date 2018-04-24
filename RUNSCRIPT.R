@@ -1,3 +1,7 @@
+# UNDER CONSTRUCTION # UNDER CONSTRUCTION # UNDER CONSTRUCTION
+# # # UNDER CONSTRUCTION # UNDER CONSTRUCTION # UNDER CONSTRUCTION
+
+
 # Main script housing preparation of data, analysis of data, and exporting analysis elements.
 
 # Sections 
@@ -19,9 +23,17 @@ source('build.cluster.R')
 source('simSCR.R')
 source('functionsSQL.R')
 
-numTasks = detectCores() - 1 # how many concurrent analyses to be done?
 
-registerDoParallel(cores = numTasks) # editable with numTasks
+# Set up parallel backend. 
+
+# You may customize the core load here. You will want to use more than 1 core
+# for more efficiency, but if you need to work on other things, you may limit it
+# to 2 cores, for example. When your computer is free, restart this process with
+# as many cores as you have for max performance.
+
+cores = detectCores() - 1 
+
+registerDoParallel(cores = cores) 
 
 # Extract Settings ------------------------------------------------------------------------------------
 
@@ -30,15 +42,34 @@ settings = writeSettings()
 # Function `assign`s each column in `settings` to an object in the environment
 extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y, pos = 1)}, x = names(what), y = what))}
 
-# Reserve some tasks to be completed.
-# reservedTasks = reserveTasks(numTasks = numTasks)
+# Reserve some tasks to be completed. 
+
+# NOTE: If we are doing replicates of tasks internally (that is, NOT one task
+# per replicate per setting), it is better to take one setting combo at a time,
+# and have the computer dedicate all of its resources to complete those `nreps`
+# replicates because we are NOT saving those intermediate outputs, only a final
+# summary of them.
+
+# This means that the analysis can NOT be resumed after cancelling *within* a
+# loop of `nreps` replicates. If you cancel it before those `nreps` analyses are
+# done, the output file won't be generated and you will have to start over.
+
+# reservedTasks = reserveTasks(numTasks = 1)
+
+nreps = 100
 
 # DEBUG PURPOSES
-reservedTasks = c(1,5400,930)
+reservedTasks = c(1)
+
+# Analysis loop ----------------------------------------------------------------------------------------------------
 
 #while(length(reservedTasks) > 0){
   
-  items = foreach(i = reservedTasks) %dopar% {
+  # Old loop structure. This was when each replicate of each setting had a taskID. 
+  # items = foreach(i = reservedTasks) %dopar% {
+
+  # New loop structure. Do one task (read: unique setting) at a time, and replicate `nreps` internally.
+  foreach(i = 1:nreps) %dopar% {
   
     settingsLocal = settings[i,] # Extract settings for task i
     
@@ -49,7 +80,6 @@ reservedTasks = c(1,5400,930)
     
     # Simulate activity centers ---------------------------------------------------------------------------
     
-    # Either a fixed population per design choice, or fully random populations 
     # Right now all done in simSCR()
     
     # Simulate encounters ---------------------------------------------------------------------------------
@@ -79,7 +109,7 @@ reservedTasks = c(1,5400,930)
     updateTaskCompleted(reservedTasks = i)
     
     # Reserve some more tasks 
-    reservedTasks = reserveTasks(numTasks = numTasks)
+    reservedTasks = reserveTasks(numTasks = 1)
     
   }
   
