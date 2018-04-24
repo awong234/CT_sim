@@ -33,9 +33,6 @@ writeSettings <- function() {
   # lam0
   lam0 = c(0.4)
   
-  # p0 - Mentioned that this needs tuning.
-  p0 = c(0.2, 0.4)
-  
   # K
   K = 5
   
@@ -65,7 +62,6 @@ writeSettings <- function() {
                          spaceOut = spaceOut, 
                          sigma = sigma, 
                          lam0 = lam0, 
-                         p0 = p0, 
                          K = K,
                          D = D, 
                          buff = buff, 
