@@ -4,7 +4,7 @@ The contents here aim to simulate encounters of animals under varied survey desi
 
 The output from the analyses will be compared to obtain the most effective designs for occupancy analysis, SCR analysis, and potentially both. 
 
-## <span style="background-color: #FFFF00">For analysis participants:</span>
+## For analysis participants:
 
 **NOTE: I can only guarantee that these functions will work on WINDOWS, particularly the database functions. For those who do not use Windows, I will not effectively be able to debug any issues.**
 
