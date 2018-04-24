@@ -106,6 +106,14 @@ This page displays some charts for the distribution of tasks taken by user, and 
 
 This page displays the start/end times of each task graphically, and a linear trend of the form (taskIndex ~ timeEnded) is assessed over tasks for prediction of the date of completion. 
 
+### uploadOutput.R
+
+TEST file : demonstrates ability to upload files to remote directory. 
+
+tidyverse's `googledrive` package only services your OWN google drive, so MUST have directory already in your account.
+
+The function will write a few test .csv files to your directory.
+
 ### writeSettings.R
 
 This file, when sourced, will write a record of all the proposed settings to memory. This is used in `RUNSCRIPT.R`
