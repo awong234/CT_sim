@@ -42,6 +42,16 @@ settings = writeSettings()
 # Function `assign`s each column in `settings` to an object in the environment
 extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y, pos = 1)}, x = names(what), y = what))}
 
+# How many replicates per settings combo?
+nreps = 100
+
+# Need a seed for each setting combo, for each replicate. Built to be larger than what we need, in case we want to run more reps per population. Upper limit is 1e3 reps.
+
+seeds.df = data.frame("taskID" = rep(settings$taskID, each = 1e3), "seeds" = 1:(nrow(settings)*1e3))
+
+# Analysis loop ----------------------------------------------------------------------------------------------------
+
+
 # Reserve some tasks to be completed. 
 
 # NOTE: Doing ONE task at a time. Parallelizing replicates.
@@ -60,14 +70,6 @@ extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y
 # and then delete them once completed. That's an option.
 
 # reservedTasks = reserveTasks(numTasks = 1) # NOT PARALLEL
-
-nreps = 100
-
-# Need a seed for each setting combo, for each replicate. Defining here because prereqs for this is the settings file and the nreps amount. Built to be larger than what we need, in case we want to run more reps per population. Upper limit is 1e3 reps.
-
-seeds.df = data.frame("taskID" = rep(settings$taskID, each = 1e3), "seeds" = 1:(nrow(settings)*1e3))
-
-# Analysis loop ----------------------------------------------------------------------------------------------------
 
 # DEBUG PURPOSES
 reservedTasks = c(1)
