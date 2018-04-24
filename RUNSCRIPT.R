@@ -44,7 +44,9 @@ extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y
 
 # Reserve some tasks to be completed. 
 
-# NOTE: If we are doing replicates of tasks internally (that is, NOT one task
+# NOTE: Doing ONE task at a time. Parallelizing replicates.
+
+# If we are doing replicates of tasks internally (that is, NOT one task
 # per replicate per setting), it is better to take one setting combo at a time,
 # and have the computer dedicate all of its resources to complete those `nreps`
 # replicates because we are NOT saving those intermediate outputs, only a final
@@ -54,14 +56,21 @@ extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y
 # loop of `nreps` replicates. If you cancel it before those `nreps` analyses are
 # done, the output file won't be generated and you will have to start over.
 
-# reservedTasks = reserveTasks(numTasks = 1)
+# Unless, however, we temporarily store outputs from `reps` < `nreps` replicates
+# and then delete them once completed. That's an option.
+
+# reservedTasks = reserveTasks(numTasks = 1) # NOT PARALLEL
 
 nreps = 100
 
-# DEBUG PURPOSES
-reservedTasks = c(1)
+# Need a seed for each setting combo, for each replicate. Defining here because prereqs for this is the settings file and the nreps amount. Built to be larger than what we need, in case we want to run more reps per population. Upper limit is 1e3 reps.
+
+seeds.df = data.frame("taskID" = rep(settings$taskID, each = 1e3), "seeds" = 1:(nrow(settings)*1e3))
 
 # Analysis loop ----------------------------------------------------------------------------------------------------
+
+# DEBUG PURPOSES
+reservedTasks = c(1)
 
 #while(length(reservedTasks) > 0){
   
@@ -69,9 +78,12 @@ reservedTasks = c(1)
   # items = foreach(i = reservedTasks) %dopar% {
 
   # New loop structure. Do one task (read: unique setting) at a time, and replicate `nreps` internally.
-  foreach(i = 1:nreps) %dopar% {
+  # Parallelize HERE
+  foreach(r = 1:nreps) %dopar% {
   
-    settingsLocal = settings[i,] # Extract settings for task i
+    settingsLocal = settings[reservedTasks,] # Extract settings for task reserved
+    
+    seeds = subset(seeds.df, taskID == reservedTasks)[r,2] # ONE seed per setting combo, per replicate.
     
     extract(settingsLocal) # Assign all components (p0, lam0, etc.) to scoped to FUNCTION environment - won't affect other tasks.
     
