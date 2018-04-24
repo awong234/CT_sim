@@ -108,7 +108,7 @@ This page displays the start/end times of each task graphically, and a linear tr
 
 ### uploadOutput.R
 
-TEST file : demonstrates ability to upload files to remote directory. 
+TEST file : demonstrates ability to upload files to remote directory. My opinion is that it doesn't confer much convenience compared to drag/drop to the folder. Maybe scheduling this to run once a night is ok, but only as a backup service.
 
 tidyverse's `googledrive` package only services your OWN google drive, so MUST have directory already in your account.
 
