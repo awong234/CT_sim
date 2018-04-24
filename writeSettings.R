@@ -3,7 +3,6 @@ library(dplyr)
 # Settings for simulations
 # This will be a data frame with 1 row per task, and columns specifying simulation settings. 
 # Make vectors of all of the below, and expand.grid will automatically generate all combinations.
-# It will write to the directory. 
 
 # Settings for trap design ----------------------------------
 
@@ -76,12 +75,12 @@ writeSettings <- function() {
   
   attr(settings, which = c("out.attrs")) = NULL
   
-  any(settings %>% duplicated()) # No duplicates
+  # any(settings %>% duplicated()) # No duplicates
   
   # Question of how many populations to simulate? {# setting combinations} x {# replicates}, or just {# replicates} applied to each setting combination? 
   # If the former:
   
-  settings = settings %>% mutate(seeds = seq(1,nrow(.)), taskID = seq(1,nrow(.))) %>% select(taskID, nTraps:seeds) # One seed for {every settings combo} x {every replicate} ; a unique number 
+  settings = settings %>% mutate(taskID = seq(1,nrow(.))) %>% select(taskID, nTraps:grid.space) # One seed for {every settings combo} x {every replicate} ; a unique number 
   
   return(settings)
   
