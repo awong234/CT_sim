@@ -113,6 +113,8 @@ N<- round(D*area,0)
    sites.used=sum(apply(y.use,2,sum)>0)#sites use at least once
    p.bar=sum(y.occ)/(sites.used*K) #estimated occupancy p
    out<-list(y.use=y.use,y.det=y.det,y.occ=y.occ,y.scr=y,s=s,X=X, K=K,n=n,nscap=nscap,sumscap=sumscap,buff=buff,
-             psi.bar = mean(psi.grid),p.bar=p.bar )
+             psi.bar = mean(psi.grid),p.bar=p.bar,
+             N = N # may as well return this too
+             )
    return(out)
  }
