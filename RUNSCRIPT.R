@@ -18,6 +18,9 @@
 
 if(!require(doParallel)){install.packages('doParallel')}
 if(!require(googledrive)){install.packages('googledrive')}
+if(!require(Rcpp)){install.packages('Rcpp')}
+if(!require(parallel)){install.packages('parallel')}
+
 
 # First time run will take you to a web page to authorize `googledrive` to
 # access your drive account. You will want to make sure to have CT_sim_outputs
@@ -27,7 +30,8 @@ source('writeSettings.R')
 source('build.cluster.R')
 source('simSCR.R')
 source('functionsSQL.R')
-source('uploadOutput.R')
+# source('uploadOutput.R')
+
 
 
 # Set up parallel backend. 
@@ -49,7 +53,7 @@ settings = writeSettings()
 extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y, pos = 1)}, x = names(what), y = what))}
 
 # How many replicates per settings combo?
-nreps = 100
+nreps = 3
 
 # Need a seed for each setting combo, for each replicate. Built to be larger than what we need, in case we want to run more reps per population. Upper limit is 1e3 reps.
 
@@ -78,7 +82,7 @@ seeds.df = data.frame("taskID" = rep(settings$taskID, each = 1e3), "seeds" = 1:(
 # reservedTasks = reserveTasks(numTasks = 1) # NOT PARALLEL
 
 # DEBUG PURPOSES
-reservedTasks = c(1)
+reservedTasks = c(1,4,72)
 
 #while(length(reservedTasks) > 0){
   
@@ -87,13 +91,27 @@ reservedTasks = c(1)
 
   # New loop structure. Do one task (read: unique setting) at a time, and replicate `nreps` internally.
   # Parallelize HERE
-  foreach(r = 1:nreps) %dopar% {
+  log = foreach(r = 1:nreps, .packages = "Rcpp") %:% foreach(task = reservedTasks) %dopar% {
+    
+    sourceCpp("intlikRcpp.cpp")
+    
+    # Check for tasks already done (if job cancelled)
+    files = dir(path = 'localOutput', pattern = ".Rdata")
+    matches = (regmatches(x = files, m = gregexpr(pattern = '\\d+', text = files, perl = T)))
+    done = do.call(what = rbind, args = lapply(matches, as.integer))
+    
+    if( # Logic checks if this current task/rep combo already stored in output.
+      any(
+        tryCatch(expr = {apply(X = done, MARGIN = 1, FUN = function(x){all(x == c(task, r))})},
+                 error = function(e){return(F)})
+      )
+    ){return(paste("Task", task, "Replicate", r, "was already completed"))}
   
-    settingsLocal = settings[reservedTasks,] # Extract settings for task reserved
+    settingsLocal = settings[task,] # Extract settings for task reserved
     
-    seeds = subset(seeds.df, taskID == reservedTasks)[r,2] # ONE seed per setting combo, per replicate.
+    seeds = subset(seeds.df, taskID == task)[r,2] # ONE seed per setting combo, per replicate.
     
-    extract(settingsLocal) # Assign all components (p0, lam0, etc.) to scoped to FUNCTION environment - won't affect other tasks.
+    extract(settingsLocal) # Assign all components (D, lam0, etc.) to scoped to FUNCTION environment - won't affect other tasks.
     
     # Generate trap array ---------------------------------------------------------------------------------
     X = build.cluster.alt(ntraps = nTraps, ntrapsC = ntrapsC, spacingin = spaceIn, spacingout = spaceOut)
@@ -103,21 +121,86 @@ reservedTasks = c(1)
     # Right now all done in simSCR()
     
     # Simulate encounters ---------------------------------------------------------------------------------
+    # This is actually SCR AND OCC data. Look at the return values in the simSCR.R script to see why.
     scrData = simSCR(D = D, lam0 = lam0, sigma = sigma, K = K, X = X, buff = buff, thinning.rate1 = thinRate1, thinning.rate2 = thinRate2, grid.space = grid.space, seed = seeds)
     
-    return(scrData)
-    
-    # Verified separate settings data passing into function.
-    
-    # Write components of sim dataset to file?
+    # I am deciding not to save data since all data can be generate at a later time using the settings grid and the seeds.
     
     # Gather data into analysis tool (occupancy and SCR) --------------------------------------------------
     
-    # Format properly . . . 
+    # Format properly
     
-    # Perform analysis . . . 
     
-    # ANALYSIS i . . . 
+    # SCR analysis
+    
+    scrAnalysis = function(data){
+      
+      y=apply(data[['y.scr']],c(1,2),sum)
+      n=data[['n']]
+      N = data[['N']]
+      buff = data[['buff']]
+      K = data[['K']]
+      parm=c(log(thinRate2),log(sigma),log(N-nrow(y)))
+      delta=0.25 #state space spacing
+      #make state space
+      Xl <- min(X[, 1]) - buff
+      Xu <- max(X[, 1]) + buff
+      Yu <- max(X[, 2]) + buff
+      Yl <- min(X[, 2]) - buff
+      xg <- seq(Xl + delta/2, Xu - delta/2, delta)
+      yg <- seq(Yl + delta/2, Yu - delta/2, delta)
+      npix.x <- length(xg)
+      npix.y <- length(yg)
+      G <- cbind(rep(xg, npix.y), sort(rep(yg, npix.x)))
+      #distance btw all SS points and all traps
+      distmat <- e2dist(X, G)
+      #append uncaptured history (all zeros) to capture history
+      ymat <- y
+      ymat <- rbind(y, rep(0, ncol(y)))
+      
+      out.intRcpp = nlm(intlikRcpp, parm, ymat = ymat, X = as.matrix(X), K = K, G = G, D = distmat, n = n, print.level=2, hessian=TRUE)
+      
+      return(out.intRcpp)
+      
+    }
+    
+    # OCC analysis
+    
+    occAnalysis = function(data){
+      y=data[['y.occ']]
+      K=data[['K']]
+      #LL function from Applied Hierarchical Models book page 43.
+      parm=c(qlogis(0.5),qlogis(0.5)) #starting values p=0.4, psi=0.9
+      negLogLikeocc=function(parm,y,K){
+        p=plogis(parm[1])
+        psi=plogis(parm[2])
+        marg.like=dbinom(y,K,p)*psi+ifelse(y==0,1,0)*(1-psi)
+        return(-sum(log(marg.like)))
+      }
+      #fit occupancy model 
+      occ.out=nlm(negLogLikeocc,parm,y=y,K=K,hessian=TRUE)
+    }
+    
+    # One at a time
+    
+    out.intRcpp = scrAnalysis(data = scrData)
+    
+    out.occ = occAnalysis(data = scrData)
+    
+    # perform simultaneously . . . ? CAN'T EXPORT RCPP FUNCTION WITHOUT COMPILING ON EACH WORKER NODE.
+      
+    # analyses = list("scrAnalysis", "occAnalysis")
+    # 
+    # # lapply(X = analyses, FUN = function(m){do.call(m, list(scrData))})  # works....but parallel version doesn't
+    # 
+    # cl = makeCluster(2)
+    # 
+    # clusterExport(cl = cl, varlist = c("analyses", "scrAnalysis", "occAnalysis", "scrData", "thinRate2", "sigma", "X", "e2dist", "intlikRcpp"), envir = environment())
+    # 
+    # out = clusterMap(cl = cl, fun = function(m,x){do.call(m, list(x))}, m = analyses, x = list(scrData), RECYCLE = T, SIMPLIFY = F)
+    # 
+    # stopCluster(cl = cl)
+    
     
     # Write result to output directory of choice . . . 
     
@@ -125,17 +208,27 @@ reservedTasks = c(1)
       dir.create("localOutput/")
     }
     
+    out = list(SCR = out.intRcpp, OCC = out.occ)
+    
+    save(out, file = paste0("localOutput/out_Task_", task,"_rep_",r,".Rdata"))
+    
+    return(paste("Task", task, "Replicate", r, "now complete and saved to file"))
+    
     # Note completion on server
-    updateTaskCompleted(reservedTasks = i)
+    # updateTaskCompleted(reservedTasks = task)
     
     # Reserve some more tasks 
-    reservedTasks = reserveTasks(numTasks = 1)
+    # task = reserveTasks(numTasks = 1)
     
   }
+  
+  # Post-process output files . . . 
+  
+  # Delete output files . . . 
   
   # Upload results if applicable . . . 
   
 # }
 
-
+# write.table(log, file = 'log.txt')
 
