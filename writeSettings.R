@@ -16,9 +16,6 @@ writeSettings <- function() {
   # Number of traps in a cluster
   ntrapsC = c(1,2,3,4,5,6,7,8)
   
-  # Cluster size
-  clusterSize = c(2, 3, 4, 5, 6, 7)
-  
   # Within cluster spacing
   spaceIn = c(0.5, 1, 1.5)
   
@@ -57,7 +54,6 @@ writeSettings <- function() {
   
   settings = expand.grid(nTraps = nTraps, 
                          ntrapsC = ntrapsC, 
-                         clusterSize = clusterSize, 
                          spaceIn = spaceIn, 
                          spaceOut = spaceOut, 
                          sigma = sigma, 
@@ -80,6 +76,4 @@ writeSettings <- function() {
   
   return(settings)
   
-  # If the latter, the population simulation will have to be rewritten; since the state space changes depending on the design, different populations will result even with a particular seed.
-
 }
