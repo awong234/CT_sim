@@ -4,11 +4,15 @@
 
 **NOTE: I can only guarantee that these functions will work on WINDOWS, particularly the database functions. For those who do not use Windows, I will not effectively be able to debug any issues.**
 
-### Running the program
+### Running the program - **RUNSCRIPT.R**
 
-When the first production run of the procedure is to be implemented, you will need **only** to execute the contents in `RUNSCRIPT.R`. To do so, open the file in R, highlight all of the contents in the file, and hit `run`. 
+When the production run of the procedure is to be implemented, you will need **only** to execute the contents in `RUNSCRIPT.R`. 
 
-When you source `functionsSQL.R`, the file will ask you to register your netID or initials - please follow the prompts. If you notice a mistake in your username, please adjust it by running 
+To do so, open the file in R, highlight all of the contents in the file, and hit `run`. Or, alternatively, just hit the source button up top.
+
+![](https://github.com/awong234/CT_sim/blob/master/assets/sourceButton.png)
+
+The program will ask you to register your netID or initials - please follow the prompts! If you notice a mistake in your username, please adjust it by running 
 
 ```
 registerUser(update = T)
