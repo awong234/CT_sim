@@ -170,7 +170,8 @@ server = function(input, output, session){
       select(taskID, timeStarted, timeEnded, owner) %>% melt(id.vars = c('taskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value)
     
     ggplot() + 
-      geom_line(data = startEnd, aes(x = factor(taskID), y = Time, group = taskID, color = owner), size = 3) +
+      geom_point(data = startEnd, aes(x = factor(taskID), y = Time, group = taskID, color = owner)) + 
+      geom_line(data = startEnd, aes(x = factor(taskID), y = Time, group = taskID, color = owner), size = nrow(startEnd)/20) +
       theme_bw() + xlab("Task ID") + 
       geom_smooth(data = startEnd %>% filter(StartEnd == "timeEnded"), aes(x = (taskID), y = Time), method = "lm", color = 'black', linetype = 'dotted')
   })
