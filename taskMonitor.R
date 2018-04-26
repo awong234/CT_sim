@@ -239,13 +239,13 @@ server = function(input, output, session){
                           uid = 'tasklistntres',
                           pwd = 'Gy435_eN5-Ry')
     
-    taskTable = getTable() %>% select(taskID, inProgress, completed)
+    taskTable = getTable()
     
-    table %>% select(taskID, inProgress, completed) %>% group_by(taskID) %>% summarize(status = ifelse(inProgress == 0 & completed == 0, "Not Started", ifelse(inProgress == 1, "In Progress", "Complete"))) %>% 
+    taskTable %>% select(taskID, inProgress, completed) %>% group_by(taskID) %>% summarize(status = ifelse(inProgress == 0 & completed == 0, "Not Started", ifelse(inProgress == 1, "In Progress", "Complete"))) %>% 
     
     ggplot() + 
-      geom_col(aes(x = "Tasks", y = taskID, fill = status)) + coord_flip() +
-      theme_bw() + scale_fill_manual(values = c('forestgreen', 'gray50', 'red4')) + theme(
+      geom_col(aes(x = "Tasks", y = taskID, fill = factor(status, levels = c("Not Started", "In Progress", "Complete")))) + coord_flip() +
+      theme_bw() + scale_fill_manual(values = c('gray50', 'forestgreen', 'orange'), name = 'status') + theme(
         axis.title = element_blank(),
         axis.text = element_blank()
       )
