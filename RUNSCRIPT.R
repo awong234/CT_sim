@@ -21,7 +21,6 @@ if(!require(googledrive)){install.packages('googledrive')}
 if(!require(Rcpp)){install.packages('Rcpp')}
 if(!require(parallel)){install.packages('parallel')}
 
-
 # First time run will take you to a web page to authorize `googledrive` to
 # access your drive account. You will want to make sure to have CT_sim_outputs
 # already in your drive in the top-most directory!
@@ -60,10 +59,10 @@ extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y
 
 # PARALLEL once again. all settings combos / replicates are available to grab on server as per conversation on 2018-04-25.
 
-# reservedTasks = reserveTasks(numTasks = cores) 
+reservedTasks = reserveTasks(numTasks = cores)
 
 # DEBUG PURPOSES
-reservedTasks = c(1,1001,2001,3001,4001)
+# reservedTasks = c(1,1001,2001,3001,4001)
 
 #while(length(reservedTasks) > 0){
   
@@ -152,14 +151,14 @@ runFunc = function(task){
   
   # One at a time
   
-  # out.intRcpp = tryCatch(expr = {scrAnalysis(data = scrData)},
-  #          error = function(e){e})
-  # 
-  # out.occ = tryCatch(expr = {occAnalysis(data = scrData)},
-  #          error = function(e){e})
+  out.intRcpp = tryCatch(expr = {scrAnalysis(data = scrData)},
+           error = function(e){e})
+
+  out.occ = tryCatch(expr = {occAnalysis(data = scrData)},
+           error = function(e){e})
   
-  out.intRcpp = scrAnalysis(data = scrData)
-  out.occ = occAnalysis(data = scrData)
+  # out.intRcpp = scrAnalysis(data = scrData)
+  # out.occ = occAnalysis(data = scrData)
   
   # perform simultaneously . . . ? CAN'T EXPORT RCPP FUNCTION WITHOUT COMPILING ON EACH WORKER NODE.
     
@@ -186,14 +185,16 @@ runFunc = function(task){
   
   save(out, file = paste0("localOutput/out_task_", task, ".Rdata"))
   
+  # Note completion on server
+  updateTaskCompleted(reservedTasks = task)
+  
   return(paste("Task", task, "now complete and saved to file"))
   
-  # Note completion on server
-  # updateTaskCompleted(reservedTasks = task)
+  
   
 }
 
-log = foreach(task = reservedTasks, .packages = "Rcpp") %dopar% {runFunc(task)}
+log = foreach(task = reservedTasks, .packages = c("Rcpp", "DBI")) %dopar% {runFunc(task)}
 
 # Reserve some more tasks 
 # reservedTasks = reserveTasks(numTasks = cores)
