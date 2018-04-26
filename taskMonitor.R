@@ -28,24 +28,6 @@ printDBsafe = function(con, name){ # perform a simple read on the server databas
   return(taskList)
 }
 
-con <- DBI::dbConnect(drv = odbc::odbc(),
-                      driver = "SQL Server",
-                      database = 'registerusers',
-                      server = 'den1.mssql4.gear.host',
-                      uid = 'registerusers',
-                      pwd = 'Zh4p92?frN2_')
-
-userTable = printDBsafe(con = con, name = 'registerusers')
-
-con <- DBI::dbConnect(drv = odbc::odbc(),
-                                  driver = "SQL Server",
-                                  database = 'tasklistntres',
-                                  server = 'den1.mssql6.gear.host',
-                                  uid = 'tasklistntres',
-                                  pwd = 'Gy435_eN5-Ry')
-
-taskTable = printDBsafe(con = con, name = 'tasklistntres')
-
 origin = '1970-01-01'
 
 
@@ -103,6 +85,24 @@ ui = fluidPage(
 # Server ----------------------------
 
 server = function(input, output, session){
+  
+  con <- DBI::dbConnect(drv = odbc::odbc(),
+                        driver = "SQL Server",
+                        database = 'registerusers',
+                        server = 'den1.mssql4.gear.host',
+                        uid = 'registerusers',
+                        pwd = 'Zh4p92?frN2_')
+  
+  userTable = printDBsafe(con = con, name = 'registerusers')
+  
+  con <- DBI::dbConnect(drv = odbc::odbc(),
+                        driver = "SQL Server",
+                        database = 'tasklistntres',
+                        server = 'den1.mssql6.gear.host',
+                        uid = 'tasklistntres',
+                        pwd = 'Gy435_eN5-Ry')
+  
+  taskTable = printDBsafe(con = con, name = 'tasklistntres')
   
   output$user = renderText(expr = {
     
