@@ -73,7 +73,7 @@ writeSettings <- function(nreps) {
   
   # NOW duplicate nreps times
   
-  settingsLong = settings[rep(1:nrow(settings), each = nreps),] %>% cbind.data.frame(., "replicate" = 1:nreps, "taskID" = 1:nrow(.)) %>% 
+  settingsLong = settings[rep(1:nrow(settings), each = nreps),] %>% cbind.data.frame(., "replicate" = 1:nreps) %>% arrange(replicate, settingID) %>% cbind.data.frame("taskID" = 1:nrow(.)) %>% 
     select(taskID, settingID, replicate, nTraps:grid.space)
   
   return(settingsLong)
