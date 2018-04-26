@@ -28,6 +28,24 @@ printDBsafe = function(con, name){ # perform a simple read on the server databas
   return(taskList)
 }
 
+con <- DBI::dbConnect(drv = odbc::odbc(),
+                      driver = "SQL Server",
+                      database = 'registerusers',
+                      server = 'den1.mssql4.gear.host',
+                      uid = 'registerusers',
+                      pwd = 'Zh4p92?frN2_')
+
+userTable = printDBsafe(con = con, name = 'registerusers')
+
+con <- DBI::dbConnect(drv = odbc::odbc(),
+                                  driver = "SQL Server",
+                                  database = 'tasklistntres',
+                                  server = 'den1.mssql6.gear.host',
+                                  uid = 'tasklistntres',
+                                  pwd = 'Gy435_eN5-Ry')
+
+taskTable = printDBsafe(con = con, name = 'tasklistntres')
+
 origin = '1970-01-01'
 
 
@@ -43,9 +61,12 @@ ui = fluidPage(
              ,tabPanel("Full Table",
                        fluidRow(
                          column(12
+                                ,htmlOutput("user")
                                 ,plotOutput("progressBar", height = '100px')
                                 ,htmlOutput("tasksCompleted")
-                                ,h4("Search your user name to see your tasks. If you're unsure what it is, run registerUsers(update = T)")
+                                ,shiny::hr()
+                                ,h4("Search a date, or search your user name to see your tasks! (shown up above in the greeting).")
+                                ,h4("If the username above is incorrect, please use registerUser(update = T) to fix.")
                                 ,DT::dataTableOutput("table")
                                 )
                        )
@@ -83,78 +104,40 @@ ui = fluidPage(
 
 server = function(input, output, session){
   
-  output$table = DT::renderDataTable(getTable())
+  output$user = renderText(expr = {
+    
+    thisSys = Sys.info()['nodename']
+    
+    paste0("<h1>Hello ", userTable[which(userTable$machineName == thisSys),'userName'],"!</h1>")
+  })
   
-  getTable = reactive({
+  formatTable = reactive({
     
-    con <- DBI::dbConnect(drv = odbc::odbc(),
-                          driver = "SQL Server",
-                          database = 'registerusers',
-                          server = 'den1.mssql4.gear.host',
-                          uid = 'registerusers',
-                          pwd = 'Zh4p92?frN2_')
-    
-    userTable = printDBsafe(con = con, name = 'registerusers')
-    
-    con <- DBI::dbConnect(drv = odbc::odbc(),
-                           driver = "SQL Server",
-                           database = 'tasklistntres',
-                           server = 'den1.mssql6.gear.host',
-                           uid = 'tasklistntres',
-                           pwd = 'Gy435_eN5-Ry')
-    
-    table = printDBsafe(con = con, name = 'tasklistntres') %>% 
+    table = taskTable %>% 
       mutate(inProgress = as.integer(inProgress), 
              completed = as.integer(completed), 
-             `Duration in Minutes` = ifelse(timeStarted > 0 & timeEnded > 0, (timeEnded - timeStarted)/60, 0),
+             `Duration in Minutes` = ifelse(timeStarted > 0 & timeEnded > 0, round((timeEnded - timeStarted)/60, 2), 0),
              timeStarted = ifelse(test = timeStarted > 0, yes = as.POSIXct(timeStarted, origin = "1970-01-01") %>% format("%b %d %Y %H:%M") %>% as.character(), no = NA),
              timeEnded = ifelse(test = timeEnded > 0, yes = as.POSIXct(timeEnded, origin = "1970-01-01") %>% format("%b %d %Y %H:%M") %>% as.character(), no = NA)
     ) %>% left_join(userTable, by = c("owner" = "machineName"))
-    
-    
     
     return(table)
     
   })
   
+  output$table = DT::renderDataTable(formatTable())
+  
   output$userTable = renderTable(expr = {
     
-    taskTable = getTable()
+    taskTable = formatTable()
     
     timeTable = taskTable %>% group_by(owner) %>% summarize(AvgTime = mean(`Duration in Minutes`)) %>% filter(owner != "NONE")
-    
-    con <- DBI::dbConnect(drv = odbc::odbc(),
-                           driver = "SQL Server",
-                           database = 'registerusers',
-                           server = 'den1.mssql4.gear.host',
-                           uid = 'registerusers',
-                           pwd = 'Zh4p92?frN2_')
-    
-    userTable = printDBsafe(con = con, name = 'registerusers') 
     
     endTable = left_join(x = userTable, y = timeTable, by = c("machineName" = "owner"))
   
   })
   
   output$userTasks = renderPlot(expr = {
-    
-    con <- DBI::dbConnect(drv = odbc::odbc(),
-                           driver = "SQL Server",
-                           database = 'tasklistntres',
-                           server = 'den1.mssql6.gear.host',
-                           uid = 'tasklistntres',
-                           pwd = 'Gy435_eN5-Ry')
-    
-    taskTable = printDBsafe(con = con, name = 'tasklistntres')
-    
-    con <- DBI::dbConnect(drv = odbc::odbc(),
-                           driver = "SQL Server",
-                           database = 'registerusers',
-                           server = 'den1.mssql4.gear.host',
-                           uid = 'registerusers',
-                           pwd = 'Zh4p92?frN2_')
-    
-    userTable = printDBsafe(con = con, name = 'registerusers')
     
     endTable = taskTable %>% left_join(userTable, by = c("owner" = "machineName")) %>% group_by(userName) %>% tally() %>% filter(!is.na(userName))
     
@@ -168,7 +151,7 @@ server = function(input, output, session){
   
   output$tasksCompleted = renderUI(expr = {
     
-    taskTable = getTable()
+    taskTable = formatTable()
     
     text1 = paste0("<h3>",sum(taskTable$completed), " of ", nrow(taskTable), " tasks completed.</h3>")
     text2 = paste0("<h4>", round(100*sum(taskTable$completed) / nrow(taskTable), 2), "% complete.</h4>")
@@ -179,14 +162,7 @@ server = function(input, output, session){
   
   output$timeChart = renderPlot(expr = {
     
-    con <- DBI::dbConnect(drv = odbc::odbc(),
-                           driver = 'SQL Server',
-                           database = 'tasklistntres',
-                           server = 'den1.mssql6.gear.host',
-                           uid = 'tasklistntres',
-                           pwd = 'Gy435_eN5-Ry')
-    
-    taskTable = printDBsafe(con = con, name = 'tasklistntres') %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
+    taskTable = taskTable %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
                                                                            timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA), 
                                                                            Duration = ifelse(timeStarted > 0 & timeEnded > 0, (timeEnded - timeStarted)/60, 0))
     
@@ -201,14 +177,7 @@ server = function(input, output, session){
   
   output$timeEstimate = renderText(expr = {
     
-    con <- DBI::dbConnect(drv = odbc::odbc(),
-                           driver = "SQL Server",
-                           database = 'tasklistntres',
-                           server = 'den1.mssql6.gear.host',
-                           uid = 'tasklistntres',
-                           pwd = 'Gy435_eN5-Ry')
-    
-    taskTable = printDBsafe(con = con, name = 'tasklistntres') %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
+    taskTable = taskTable %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
                                                                            timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA)
                                                                           ) %>% arrange(timeStarted)
     
@@ -231,14 +200,7 @@ server = function(input, output, session){
   
   output$progressBar = renderPlot(expr = {
     
-    con <- DBI::dbConnect(drv = odbc::odbc(),
-                          driver = "SQL Server",
-                          database = 'tasklistntres',
-                          server = 'den1.mssql6.gear.host',
-                          uid = 'tasklistntres',
-                          pwd = 'Gy435_eN5-Ry')
-    
-    taskTable = getTable()
+    taskTable = formatTable()
     
     taskTable %>% select(taskID, inProgress, completed) %>% group_by(taskID) %>% summarize(status = ifelse(inProgress == 0 & completed == 0, "Not Started", ifelse(inProgress == 1, "In Progress", "Complete"))) %>% 
     
