@@ -1,16 +1,41 @@
-# Overview
-
-The contents here aim to simulate encounters of animals under varied survey designs using clustered point detectors of a fixed sampling effort. The simulated data will be analyzed using spatial capture-recapture and occupancy modeling. 
-
-The output from the analyses will be compared to obtain the most effective designs for occupancy analysis, SCR analysis, and potentially both. 
+# Instructions
 
 ## For analysis participants:
 
 **NOTE: I can only guarantee that these functions will work on WINDOWS, particularly the database functions. For those who do not use Windows, I will not effectively be able to debug any issues.**
 
-When the first production run of the procedure is to be implemented, you will need only execute the contents in `RUNSCRIPT.R`. To do so, open the file in R, highlight all of the contents in the file, and hit `run`. 
+### Running the program
+
+When the first production run of the procedure is to be implemented, you will need **only** to execute the contents in `RUNSCRIPT.R`. To do so, open the file in R, highlight all of the contents in the file, and hit `run`. 
+
+When you source `functionsSQL.R`, the file will ask you to register your netID or initials - please follow the prompts. If you notice a mistake in your username, please adjust it by running 
+
+```
+registerUser(update = T)
+```
 
 For those curious, you may use the Shiny app `taskMonitor.R` to observe the work that all the computers are doing. You will need to have the `shiny` library to execute, but the app will launch from either R or Rstudio. It will open a browser window with multiple tabs to observe the processes at work. 
+
+### Managing outputs
+
+When you've run the program for some time, you will see a folder called `localOutput` in the `CT_sim` directory, and `.Rdata` files within. 
+
+***IMPORTANT***
+
+For those who are **not** using automation to upload the files, you will need to drag and drop the outputs to the shared folder. You should see a green icon in the lower-right hand corner indicating successful uploads.
+
+![](https://github.com/awong234/CT_sim/blob/master/assets/gdriveUpload.png)
+
+When you go to upload **new** files, be sure to follow the next steps! Select all of the files in the `localOutput` directory, and drag and drop into the shared folder. It will show you a dialog as follows:
+
+![](https://github.com/awong234/CT_sim/blob/master/assets/gdrivePrompt.png)
+
+**SELECT CANCEL.**
+
+* If you select "Keep Separate", it will duplicate all of the files you have already uploaded. 
+* If you select "Update Existing", it will re-upload all of the files you have already uploaded, which will become tedious with greater amounts of files. 
+
+Be sure to upload your outputs frequently so that we have them all in case of system failure.
 
 # Files contained
 
