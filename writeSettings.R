@@ -8,7 +8,7 @@ library(dplyr)
 
 # It's a function to avoid all of the side effects from specifying the individual settings parameters.
 
-writeSettings <- function() {
+writeSettings <- function(nreps) {
   
   # Number of traps
   nTraps = c(40, 80, 120)
@@ -69,12 +69,14 @@ writeSettings <- function() {
   
   # any(settings %>% duplicated()) # No duplicates
   
-  # Question of how many populations to simulate? {# setting combinations} x {# replicates}, or just {# replicates} applied to each setting combination? 
-  # If the former:
+  settings = settings %>% mutate(settingID = seq(1,nrow(.)))
   
-  settings = settings %>% mutate(taskID = seq(1,nrow(.))) %>% select(taskID, nTraps:grid.space) # One seed for {every settings combo} x {every replicate} ; a unique number 
+  # NOW duplicate nreps times
   
-  return(settings)
+  settingsLong = settings[rep(1:nrow(settings), each = nreps),] %>% cbind.data.frame(., "replicate" = 1:nreps, "taskID" = 1:nrow(.)) %>% 
+    select(taskID, settingID, replicate, nTraps:grid.space)
+  
+  return(settingsLong)
   
 }
 
