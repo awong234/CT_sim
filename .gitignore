@@ -2,7 +2,6 @@
 .Rhistory
 *.Rproj
 /.Rproj*
-username.txt
 localOutput/
 reservedTasks.csv
 .httr-oauth
