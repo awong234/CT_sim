@@ -44,6 +44,7 @@ ui = fluidPage(
              ,tabPanel("Full Table",
                        fluidRow(
                          column(12
+                                ,plotOutput("progressBar", height = '100px')
                                 ,htmlOutput("tasksCompleted")
                                 ,h4("Search your user name to see your tasks. If you're unsure what it is, run registerUsers(update = T)")
                                 ,DT::dataTableOutput("table")
@@ -228,6 +229,27 @@ server = function(input, output, session){
     
     
   })
+  
+  output$progressBar = renderPlot(expr = {
+    
+    con <- DBI::dbConnect(drv = odbc::odbc(),
+                          driver = "SQL Server",
+                          database = 'tasklistntres',
+                          server = 'den1.mssql6.gear.host',
+                          uid = 'tasklistntres',
+                          pwd = 'Gy435_eN5-Ry')
+    
+    taskTable = getTable() %>% select(taskID, inProgress, completed)
+    
+    table %>% select(taskID, inProgress, completed) %>% group_by(taskID) %>% summarize(status = ifelse(inProgress == 0 & completed == 0, "Not Started", ifelse(inProgress == 1, "In Progress", "Complete"))) %>% 
+    
+    ggplot() + 
+      geom_col(aes(x = "Tasks", y = taskID, fill = status)) + coord_flip() +
+      theme_bw() + scale_fill_manual(values = c('forestgreen', 'gray50', 'red4')) + theme(
+        axis.title = element_blank(),
+        axis.text = element_blank()
+      )
+  }, height = 100)
   
 }
 
