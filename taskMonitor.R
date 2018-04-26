@@ -2,13 +2,12 @@
 
 # You can view the task list, and other computation performance metrics, as well as anticipated end of analyses.
 
-library(shiny)
-library(odbc)
-library(DBI)
-library(dplyr)
-library(ggplot2)
-library(viridis)
-library(reshape2)
+if(!require(shiny)){install.packages("shiny")}
+if(!require(DBI)){install.packages("DBI")}
+if(!require(dplyr)){install.packages("dplyr")}
+if(!require(ggplot2)){install.packages("ggplot2")}
+if(!require(viridis)){install.packages("viridis")}
+if(!require(reshape2)){install.packages("reshape2")}
 
 printDBsafe = function(con, name){ # perform a simple read on the server database
   test = NULL

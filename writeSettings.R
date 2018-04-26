@@ -1,4 +1,4 @@
-library(dplyr)
+if(!require(dplyr)){install.packages('dplyr')}
 
 # Settings for simulations
 # This will be a data frame with 1 row per task, and columns specifying simulation settings. 
