@@ -77,3 +77,5 @@ writeSettings <- function() {
   return(settings)
   
 }
+
+settings = writeSettings(nreps = 100)
