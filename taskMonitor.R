@@ -9,6 +9,7 @@ if(!require(ggplot2)){install.packages("ggplot2")}
 if(!require(viridis)){install.packages("viridis")}
 if(!require(reshape2)){install.packages("reshape2")}
 if(!require(mgcv)){install.packages("mgcv")}
+if(!require(plotly)){install.packages("plotly")}
 
 printDBsafe = function(con, name){ # perform a simple read on the server database
   test = NULL
