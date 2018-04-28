@@ -8,6 +8,7 @@ if(!require(dplyr)){install.packages("dplyr")}
 if(!require(ggplot2)){install.packages("ggplot2")}
 if(!require(viridis)){install.packages("viridis")}
 if(!require(reshape2)){install.packages("reshape2")}
+if(!require(mgcv)){install.packages("mgcv")}
 
 printDBsafe = function(con, name){ # perform a simple read on the server database
   test = NULL
@@ -26,6 +27,34 @@ printDBsafe = function(con, name){ # perform a simple read on the server databas
   dbDisconnect(con)
   
   return(taskList)
+}
+
+regressions = function(taskTable, k){
+  
+  taskTable = taskTable %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
+                                   timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA)
+  )
+  
+  maxTasks = nrow(taskTable)
+  
+  endTimes = taskTable %>% filter(completed == 1) %>% mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% select(taskID, timeStarted, timeEnded, owner) %>% melt(id.vars = c('taskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value) %>% filter(StartEnd == "timeEnded")
+  
+  lm1 = lm(formula = Time %>% as.numeric() ~ taskID, data = endTimes)
+  
+  newdata = data.frame('taskID' = seq(1, maxTasks), 'predDate' = NA)
+  
+  predictedDates = newdata
+  
+  predictedDates$Time = predict(lm1, newdata = newdata) %>% as.numeric() %>% as.POSIXct(origin = origin)
+  
+  m = gam(formula = Time %>% as.numeric ~ s(taskID, k = k), data = startEnd %>% filter(StartEnd == "timeEnded"))
+  
+  newdata = data.frame('taskID' = taskTable$taskID, 'Time' = NA)
+  
+  newdata$Time = predict.gam(object = m, newdata = newdata) %>% as.numeric() %>% as.POSIXct(origin = origin)
+  
+  return(list("lm" = predictedDates, "gam" = newdata))
+  
 }
 
 origin = '1970-01-01'
@@ -67,12 +96,14 @@ ui = fluidPage(
                        fluidRow(
                          column(12
                                 ,h4("Chart of Task Completion")
-                                ,plotOutput("timeChart", height = '500px')
+                                ,sliderInput("k", label = "Select smooth parameter", min = 2, max = 10, value = 2, step = 1)
+                                # ,plotOutput("timeChart", height = '500px'
+                                ,plotlyOutput("timeChart2", height = '500px')
                                 ))
                        ,fluidRow(
                          column(12
                                  ,h4("Estimate of remaining time")
-                                 ,textOutput("timeEstimate"))
+                                 ,htmlOutput("timeEstimate"))
                        )
                          
                        )
@@ -160,41 +191,60 @@ server = function(input, output, session){
     
   })
   
-  output$timeChart = renderPlot(expr = {
+  # output$timeChart = renderPlot(expr = {
+  #   
+  #   taskTable = taskTable %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
+  #                                                                          timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA), 
+  #                                                                          Duration = ifelse(timeStarted > 0 & timeEnded > 0, (timeEnded - timeStarted)/60, 0))
+  #   
+  #   startEnd = taskTable %>% filter(completed == 1 | inProgress == 1) %>% mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% 
+  #     select(taskID, timeStarted, timeEnded, owner) %>% melt(id.vars = c('taskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value)
+  #   
+  #   ggplot() + 
+  #     geom_point(data = startEnd, aes(x = factor(taskID), y = Time, group = taskID, color = owner)) + 
+  #     geom_line(data = startEnd, aes(x = factor(taskID), y = Time, group = taskID, color = owner), size = nrow(startEnd)/20) +
+  #     theme_bw() + xlab("Task ID") + 
+  #     geom_smooth(data = startEnd %>% filter(StartEnd == "timeEnded"), aes(x = (taskID), y = Time), method = "lm", color = 'black', linetype = 'dotted')
+  # })
+  
+  output$timeChart2 = renderPlotly(expr = {
     
-    taskTable = taskTable %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
-                                                                           timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA), 
-                                                                           Duration = ifelse(timeStarted > 0 & timeEnded > 0, (timeEnded - timeStarted)/60, 0))
+    taskTable_formatted = taskTable %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
+                                     timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA), 
+                                     Duration = ifelse(timeStarted > 0 & timeEnded > 0, (timeEnded - timeStarted)/60, 0))
     
-    startEnd = taskTable %>% filter(completed == 1 | inProgress == 1) %>% mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% 
+    startEnd = taskTable_formatted %>% filter(completed == 1 | inProgress == 1) %>% mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% 
       select(taskID, timeStarted, timeEnded, owner) %>% melt(id.vars = c('taskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value)
     
-    ggplot() + 
-      geom_point(data = startEnd, aes(x = factor(taskID), y = Time, group = taskID, color = owner)) + 
-      geom_line(data = startEnd, aes(x = factor(taskID), y = Time, group = taskID, color = owner), size = nrow(startEnd)/20) +
-      theme_bw() + xlab("Task ID") + 
-      geom_smooth(data = startEnd %>% filter(StartEnd == "timeEnded"), aes(x = (taskID), y = Time), method = "lm", color = 'black', linetype = 'dotted')
+    out = regressions(taskTable = taskTable, k = input$k)
+    
+    newdata = out$gam
+    
+    linear = out$lm
+    
+    small = plot_ly(data = startEnd) %>% add_markers(x = ~taskID, y = ~Time, color = ~owner) %>% add_lines(data = newdata %>% filter(taskID %in% startEnd$taskID), x = ~taskID, y = ~Time, name = 'GAM Predict')
+    
+    full = plot_ly() %>% add_lines(data = newdata, x = ~taskID, y = ~Time, name = "GAM Predict (to end)") %>% add_lines(data = linear, x = ~taskID, y = ~Time, name = "LM Predict (to end)")
+    
+    subplot(small, full, widths = c(0.8, 0.2), titleX = T, titleY = T)
+    
   })
+  
+  
   
   output$timeEstimate = renderText(expr = {
     
-    taskTable = taskTable %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
-                                                                           timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA)
-                                                                          )
+    out = regressions(taskTable = taskTable, k = input$k)
     
-    maxTasks = nrow(taskTable)
+    predictedDates = out$lm
     
-    taskTable = taskTable %>% filter(completed == 1) %>% mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% select(taskID, timeStarted, timeEnded, owner) %>% melt(id.vars = c('taskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value)
+    newdata = out$gam
     
-    lm1 = lm(formula = Time ~ taskID, data = taskTable %>% filter(StartEnd == 'timeEnded'))
+    finalDate = predictedDates[maxTasks,'Time'] %>% as.POSIXct(origin = origin) %>% format("%m/%d/%Y")
     
-    newdata = data.frame('taskID' = seq(1, maxTasks), 'predDate' = NA)
+    finalDateGAM = newdata[maxTasks,'Time'] %>% as.POSIXct(origin = origin) %>% format("%m/%d/%Y")
     
-    predictedDates = predict(lm1, newdata = newdata)
-    
-    finalDate = predictedDates[maxTasks] %>% as.POSIXct(origin = origin) %>% format("%m/%d/%Y")
-    
-    paste0("Date of completion anticipated to be ", finalDate, ". Ordinary linear regression on end times predicting end time of task number ", maxTasks, ".")
+    paste0("Date of completion anticipated to be: <br> LM =   <b>", finalDate, "</b>. Ordinary linear regression on end times predicting end time of task number ", maxTasks, "<br>GAM = <b>", finalDateGAM, "</b>. GAM is a generalized additive model regression on end time using a spline smoothing function with ", input$k, " degrees of freedom")
     
     
   })
@@ -207,7 +257,7 @@ server = function(input, output, session){
     
     ggplot() + 
       geom_col(aes(x = "Tasks", y = taskID, fill = factor(status, levels = c("Not Started", "In Progress", "Complete")))) + coord_flip() +
-      theme_bw() + scale_fill_manual(values = c('gray50', 'forestgreen', 'orange'), name = 'status') + theme(
+      theme_bw() + scale_fill_manual(values = c('gray50', 'orange', 'forestgreen'), name = 'status') + theme(
         axis.title = element_blank(),
         axis.text = element_blank()
       )
