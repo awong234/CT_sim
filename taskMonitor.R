@@ -231,15 +231,16 @@ server = function(input, output, session){
     
     linear = out$lm
     
-    small = plot_ly(data = startEnd) %>% add_markers(x = ~taskID, y = ~Time, color = ~owner) %>% add_lines(data = newdata %>% filter(taskID %in% startEnd$taskID), x = ~taskID, y = ~Time, name = 'GAM Predict') %>%
-      add_trace(data = newdata %>% filter(taskID %in% startEnd$taskID), x = ~taskID, y = ~Upper, type = 'scatter', mode = 'lines', line = list(color = 'transparent', showlegend = F)) %>% 
-      add_trace(data = newdata %>% filter(taskID %in% startEnd$taskID), x = ~taskID, y = ~Lower, type = 'scatter', mode = 'lines', fill = 'tonexty', fillcolor = 'rgba(255,127,12,0.2)', line = list(color = 'transparent'), showlegend = F)
+    small = plot_ly(data = startEnd) %>% 
+      add_markers(x = ~taskID, y = ~Time, color = ~owner) %>% 
+      add_lines(data = newdata %>% filter(taskID %in% startEnd$taskID), x = ~taskID, y = ~Time, name = 'GAM Predict') %>% 
+      add_ribbons(data = newdata %>% filter(taskID %in% startEnd$taskID), x = ~taskID, ymax = ~Upper, ymin = ~Lower, fillcolor = 'rgba(255, 156, 0, 0.2)', line = list(color = 'rgba(255, 156, 0, 0.05'), showlegend = F)
     
     full = plot_ly() %>% 
       add_lines(data = newdata, x = ~taskID, y = ~Time, name = "GAM Predict (to end)") %>% 
       add_lines(data = linear, x = ~taskID, y = ~Time, name = "LM Predict (to end)") %>% 
-      add_trace(data = newdata, x = ~taskID, y = ~Upper, type = 'scatter', mode = 'lines', line = list(color = 'transparent', showlegend = F)) %>% 
-      add_trace(data = newdata, x = ~taskID, y = ~Lower, type = 'scatter', mode = 'lines', fill = 'tonexty', fillcolor = 'rgba(255,127,12,0.2)', line = list(color = 'transparent'), showlegend = F)
+      add_ribbons(data = newdata, x = ~taskID, ymax = ~Upper, ymin = ~Lower, fillcolor = 'rgba(255, 156, 0, 0.2)', line = list(color = 'rgba(255, 156, 0, 0.05'), showlegend = F)
+    
       
     
     subplot(small, full, widths = c(0.8, 0.2), titleX = T, titleY = T)
