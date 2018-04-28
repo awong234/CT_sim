@@ -48,7 +48,7 @@ regressions = function(taskTable, k){
   
   predictedDates$Time = predict(lm1, newdata = newdata) %>% as.numeric() %>% as.POSIXct(origin = origin)
   
-  m = gam(formula = Time %>% as.numeric ~ s(taskID, k = k), data = startEnd %>% filter(StartEnd == "timeEnded"))
+  m = gam(formula = Time %>% as.numeric ~ s(taskID, k = k), data = endTimes %>% filter(StartEnd == "timeEnded"))
   
   newdata = data.frame('taskID' = taskTable$taskID, 'Time' = NA)
   
@@ -135,6 +135,8 @@ server = function(input, output, session){
                         pwd = 'Gy435_eN5-Ry')
   
   taskTable = printDBsafe(con = con, name = 'tasklistntres')
+  
+  maxTasks = taskTable$taskID %>% max
   
   output$user = renderText(expr = {
     
@@ -234,7 +236,7 @@ server = function(input, output, session){
   
   
   output$timeEstimate = renderText(expr = {
-    
+
     out = regressions(taskTable = taskTable, k = input$k)
     
     predictedDates = out$lm
