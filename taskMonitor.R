@@ -54,7 +54,11 @@ regressions = function(taskTable, k){
   
   newdata$Time = predict.gam(object = m, newdata = newdata) %>% as.numeric() %>% as.POSIXct(origin = origin)
   
-  return(list("lm" = predictedDates, "gam" = newdata))
+  se = predict.gam(object = m, newdata = newdata, se.fit = T)[[2]] %>% as.numeric()
+  
+  seData = data.frame('taskID' = taskTable$taskID, 'SE' = se)
+  
+  return(list("lm" = predictedDates, "gam" = newdata, "gamModel" = m, "se" = seData))
   
 }
 
@@ -223,11 +227,20 @@ server = function(input, output, session){
     
     newdata = out$gam
     
+    newdata = newdata %>% mutate(Upper = Time + out$se$SE, Lower = Time - out$se$SE)
+    
     linear = out$lm
     
-    small = plot_ly(data = startEnd) %>% add_markers(x = ~taskID, y = ~Time, color = ~owner) %>% add_lines(data = newdata %>% filter(taskID %in% startEnd$taskID), x = ~taskID, y = ~Time, name = 'GAM Predict')
+    small = plot_ly(data = startEnd) %>% add_markers(x = ~taskID, y = ~Time, color = ~owner) %>% add_lines(data = newdata %>% filter(taskID %in% startEnd$taskID), x = ~taskID, y = ~Time, name = 'GAM Predict') %>%
+      add_trace(data = newdata %>% filter(taskID %in% startEnd$taskID), x = ~taskID, y = ~Upper, type = 'scatter', mode = 'lines', line = list(color = 'transparent', showlegend = F)) %>% 
+      add_trace(data = newdata %>% filter(taskID %in% startEnd$taskID), x = ~taskID, y = ~Lower, type = 'scatter', mode = 'lines', fill = 'tonexty', fillcolor = 'rgba(255,127,12,0.2)', line = list(color = 'transparent'), showlegend = F)
     
-    full = plot_ly() %>% add_lines(data = newdata, x = ~taskID, y = ~Time, name = "GAM Predict (to end)") %>% add_lines(data = linear, x = ~taskID, y = ~Time, name = "LM Predict (to end)")
+    full = plot_ly() %>% 
+      add_lines(data = newdata, x = ~taskID, y = ~Time, name = "GAM Predict (to end)") %>% 
+      add_lines(data = linear, x = ~taskID, y = ~Time, name = "LM Predict (to end)") %>% 
+      add_trace(data = newdata, x = ~taskID, y = ~Upper, type = 'scatter', mode = 'lines', line = list(color = 'transparent', showlegend = F)) %>% 
+      add_trace(data = newdata, x = ~taskID, y = ~Lower, type = 'scatter', mode = 'lines', fill = 'tonexty', fillcolor = 'rgba(255,127,12,0.2)', line = list(color = 'transparent'), showlegend = F)
+      
     
     subplot(small, full, widths = c(0.8, 0.2), titleX = T, titleY = T)
     
