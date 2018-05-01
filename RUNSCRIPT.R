@@ -16,10 +16,18 @@
   # Analyze data under OCC
   # Export analysis elements
 
+# Preparation - install all packages used.
+
 if(!require(doParallel)){install.packages('doParallel')}
 if(!require(googledrive)){install.packages('googledrive')}
-if(!require(Rcpp)){install.packages('Rcpp')}
 if(!require(parallel)){install.packages('parallel')}
+if(!require(Rcpp)){install.packages('Rcpp')}
+if(!require(devtools)){install.packages('devtools')}
+
+# Install spim package. If you do it this way, you will need to install Rtools
+# v3.4 (find_rtools() Checks for this). Link in github front page.
+
+if(!require(SPIM) & find_rtools()){install_github('benaug/SPIM')}
 
 # First time run will take you to a web page to authorize `googledrive` to
 # access your drive account. You will want to make sure to have CT_sim_outputs
@@ -75,8 +83,8 @@ while(length(reservedTasks) > 0){
   
   runFunc = function(task){
     
-    # Will source with Ben's SPIM package 
-    sourceCpp("intlikRcpp.cpp")
+    # Will source with Ben's SPIM package - otherwise source here.
+    if(!require(SPIM)){sourceCpp("intlikRcpp.cpp")}
   
     # Check for tasks already done (if job cancelled)
     files = dir(path = 'localOutput', pattern = ".Rdata")
@@ -198,10 +206,9 @@ while(length(reservedTasks) > 0){
     return(paste("Task", task, "now complete and saved to file"))
     
     
-    
   }
   
-  foreach(task = reservedTasks, .packages = c("Rcpp", "DBI")) %dopar% {runFunc(task)}
+  foreach(task = reservedTasks, .packages = c("Rcpp", "DBI","SPIM")) %dopar% {runFunc(task)}
   
   # Reserve some more tasks 
   reservedTasks = reserveTasks(numTasks = cores)
