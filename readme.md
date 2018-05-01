@@ -4,9 +4,35 @@
 
 **NOTE: I can only guarantee that these functions will work on WINDOWS, particularly the database functions. For those who do not use Windows, I will not effectively be able to debug any issues.**
 
+## START HERE
+
+I suggest running these **ONE-BY-ONE** so you know exactly where you may encounter errors. Additionally, the `registerUsers()` function is often skipped over when running things in bulk.
+
+### Setup
+
+You will need to install a few things before getting started, most importantly Ben's SPIM package. There are two ways to go about this.
+
+#### Directly within R
+
+The first - and most automatic - is to install Rtools and then run some commands that are already in the script. 
+
+Go get Rtools from the [link here](https://cran.r-project.org/bin/windows/Rtools/Rtools34.exe). This link will go get the installer immediately. 
+
+Then, run the preparation block in the script. 
+
+#### From the repository
+
+The second method will be to clone the repository from Ben's link: https://github.com/benaug/SPIM .
+
+Then, zip up the file and remember where you placed it.
+
+Then, use the `install.packages` dialog going through Tools > Install Packages > Install From > Package Archive File. Then select the .zip file. 
+
+The package *should* install without issue, but I personally could not get this to work.
+
 ### Running the program - **RUNSCRIPT.R**
 
-When the production run of the procedure is to be implemented, you will need **only** to execute the contents in `RUNSCRIPT.R`. 
+Once you've installed the SPIM package and all the other requisite packages, you will need **only** to execute the contents in `RUNSCRIPT.R`. 
 
 To do so, open the file in R, highlight all of the contents in the file, and hit `run`. Or, alternatively, just hit the source button up top.
 
