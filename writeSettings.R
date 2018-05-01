@@ -80,4 +80,4 @@ writeSettings <- function(nreps) {
   
 }
 
-settings = writeSettings(nreps = 100)
+settings = writeSettings(nreps = 500)
