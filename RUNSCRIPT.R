@@ -71,8 +71,6 @@ reservedTasks = reserveTasks(numTasks = cores)
 # DEBUG PURPOSES
 # reservedTasks = c(1,1001,2001,3001,4001)
 
-# How often to upload?
-
 while(length(reservedTasks) > 0){
   
   runFunc = function(task){
@@ -203,7 +201,7 @@ while(length(reservedTasks) > 0){
     
   }
   
-  log = foreach(task = reservedTasks, .packages = c("Rcpp", "DBI")) %dopar% {runFunc(task)}
+  foreach(task = reservedTasks, .packages = c("Rcpp", "DBI")) %dopar% {runFunc(task)}
   
   # Reserve some more tasks 
   reservedTasks = reserveTasks(numTasks = cores)
@@ -211,6 +209,4 @@ while(length(reservedTasks) > 0){
   if(autoUpload){uploadFiles(filePaths = paste0('localOutput/',files), drivePath = drivePath, par = F)}
   
 }
-
-# write.table(log, file = 'log.txt')
 
