@@ -8,6 +8,7 @@
 # needs to be able to be edited in place, instead of by replacing files.
 
 if(!require(DBI)){install.packages('DBI')}
+if(!require(odbc)){install.packages('odbc')}
 
 reserveTasks = function(numTasks = NULL){
   
