@@ -60,6 +60,10 @@ Within the setup block you may customize a few things. Specifically, you can cha
 
 Set `cores = detectCores()` for maximum performance. Set `cores = 1` for minimum load (if you need the resources for something else).
 
+#### Number of tasks to complete per cycle
+
+By default, `numTasks = cores`, so you're doing one task per core that you have. If you want to work your computer harder, you can set `numTasks = 2*cores`, or something greater than the amount of cores that you have reserved, so that there are more tasks going on at once. 
+
 #### autoUpload
 
 As mentioned before, you can have the script manage your uploads for you by setting `autoUpload = T`. However, you will see a performance penalty because the `googledrive` package takes a long time to talk to the server. 
