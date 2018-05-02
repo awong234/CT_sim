@@ -16,7 +16,7 @@
   # Analyze data under OCC
   # Export analysis elements
 
-# Preparation - install all packages used.
+# Preparation block ------------------------------------------------------------------------------------------------------------------------------
 
 if(!require(doParallel)){install.packages('doParallel')}
 if(!require(googledrive)){install.packages('googledrive')}
@@ -36,8 +36,9 @@ if(!require(SPIM) & find_rtools()){install_github('benaug/SPIM')}
 source('writeSettings.R')
 source('build.cluster.R')
 source('simSCR.R')
-source('uploadOutput.R')
 source('functionsSQL.R')
+
+# Setup block ----------------------------------------------------------------------------------------------------------------------------------------
 
 # Set up parallel backend. 
 
@@ -53,6 +54,8 @@ registerDoParallel(cores = cores)
 # Automatic uploads? WARNING: VERY SLOW
 
 autoUpload = F
+
+if(autoUpload){source('uploadOutput.R')}
 
 files = dir(path = 'localOutput/', pattern = ".Rdata")
 
