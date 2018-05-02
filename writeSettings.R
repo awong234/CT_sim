@@ -14,36 +14,37 @@ writeSettings <- function(nreps) {
   nTraps = c(40, 80, 120)
   
   # Number of traps in a cluster
-  ntrapsC = c(1,2,3,4,5,6,7,8)
+  ntrapsC = c(1,2,3,4,5,6,7,8,9,10,12,15,16,20)
   
   # Within cluster spacing
-  spaceIn = c(0.5, 1, 1.5)
+  spaceIn = c(0.5,0.6, 0.7, 0.8,0.9 ,1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9,
+2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3.0)
   
   # Among cluster spacing
-  spaceOut = c(1.5, 2, 2.5)
+  spaceOut = c(1.5, 1.75, 2, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5)
   
   # Settings for population sim -------------------------------
   
   # sigma - Ben mentioned that since spacing is relative to sigma, this needs not be varied.
-  sigma = 0.5
+  sigma = 1.0
   
   # lam0
-  lam0 = c(0.4)
+  lam0 = c(0.005, 0.01, 0.02)
   
   # K
-  K = 5
+  K = 60
   
   # Density
-  D = c(0.1, 0.25, 0.5)
+  D = c(0.01, 0.20, 0.5)
   
   # Buffer
   buff = 3
   
   # thinning.rate1
-  thinRate1 = c(0.7)
+  thinRate1 = c(0.6)
   
   # thinning.rate2
-  thinRate2 = c(0.7)
+  thinRate2 = c( 0.8)
   
   # Grid spacing
   
