@@ -6,7 +6,7 @@
 
 ## START HERE
 
-I suggest running these **ONE-BY-ONE** so you know exactly where you may encounter errors. Additionally, the `registerUsers()` function is often skipped over when running things in bulk.
+I suggest running these **ONE-BY-ONE** so you know exactly where you may encounter errors. This is also because the `registerUsers()` function is skipped over when running things in bulk.
 
 ### Setup
 
@@ -16,13 +16,13 @@ You will need to install a few things before getting started, most importantly B
 
 The first - and most automatic - is to install Rtools and then run some commands that are already in the script. 
 
-Go get Rtools from the [link here](https://cran.r-project.org/bin/windows/Rtools/Rtools34.exe). This link will go get the installer immediately. 
+Go get Rtools from the [link here](https://cran.r-project.org/bin/windows/Rtools/Rtools34.exe). This link will go get the installer immediately. Run the installer as you would any other installer.
 
-Then, run the preparation block in the script. 
+Then, run the preparation block in the script (this is labeled). 
 
 #### From the repository
 
-The second method will be to clone the repository from Ben's link: https://github.com/benaug/SPIM .
+The second method will be to clone the repository from Ben's link: [https://github.com/benaug/SPIM](https://github.com/benaug/SPIM) .
 
 Then, zip up the file and remember where you placed it.
 
@@ -30,15 +30,15 @@ Then, use the `install.packages` dialog going through Tools > Install Packages >
 
 The package *should* install without issue, but I personally could not get this to work.
 
-### Running the program - **RUNSCRIPT.R**
+## Running the program - **RUNSCRIPT.R**
 
 Once you've installed the SPIM package and all the other requisite packages, you will need **only** to execute the contents in `RUNSCRIPT.R`. 
 
-To do so, open the file in R, highlight all of the contents in the file, and hit `run`. Or, alternatively, just hit the source button up top.
+To do so, open the file in R and just hit the source button up top. You can also run the document interactively, but I'd prefer you source it the first few times.
 
 ![](https://github.com/awong234/CT_sim/blob/master/assets/sourceButton.png)
 
-The program will ask you to register your netID or initials - please follow the prompts! If you notice a mistake in your username, please adjust it by running 
+The program *should* ask you to register your netID or initials - please follow the prompts! If you notice a mistake in your username, please adjust it by running 
 
 ```
 registerUser(update = T)
@@ -48,11 +48,35 @@ For those curious, you may use the Shiny app `taskMonitor.R` to observe the work
 
 ### Managing outputs
 
-When you've run the program for some time, you will see a folder called `localOutput` in the `CT_sim` directory, and `.Rdata` files within. 
+When you've run the program for some time, you will see a folder called `localOutput` in the `CT_sim` directory, and `.Rdata` files within. There are two ways to get this up to the cloud, either automatically or manually. In either case, you will need to know the cloud folder link:
+
+https://drive.google.com/open?id=1ScHvlCXL-8kjzeeLfb_LTH45worK4b3Y
+
+**NOTE: Automatic uploads are painfully SLOW. On 7 files of size 2kb each, the upload took 3 minutes, as opposed to seconds dragging and dropping. I will be manually uploading my outputs.**
+
+#### Automatic upload
+
+This option will probably be feasible only if you have unlimited google drive space through Cornell. First, ensure that you have migrated the shared folder into your own google drive by clicking on the link above, clicking the folder name, and clicking "Add to My Drive". Ensure that it is in the root (top-most) directory.
+
+![](https://github.com/awong234/CT_sim/blob/master/assets/googleDriveMigrate.png)
+
+If you want the script to manage your uploads automatically, within `RUNSCRIPT.R`, change the value of `autoUpload` to `TRUE`, around line 58. The file will then source `uploadOutput.R`. 
+
+It will prompt you to generate a token, and at the same time bring up a browser window. 
+
+![Browser prompt.](https://github.com/awong234/CT_sim/blob/master/assets/googleDriveBrowserPrompt.png)
+
+![R prompt.](https://github.com/awong234/CT_sim/blob/master/assets/googleDriveAuth.png)
+
+First, address any inputs that R may ask of you, then in the browser allow tidyverse to access your google drive. You will have a token created in the directory that will authenticate your R session as it communicates with your Drive account.
+
+The script will upload the files as they come out. Once again, note that this will penalize efficiency due to slow uploads.
+
+#### Manual upload
 
 ***IMPORTANT***
 
-For those who are **not** using automation to upload the files, you will need to drag and drop the outputs to the shared folder. You should see a green icon in the lower-right hand corner indicating successful uploads.
+For those who are **not** using automation to upload the files, you will need to drag and drop the outputs to the [shared folder](https://drive.google.com/open?id=1ScHvlCXL-8kjzeeLfb_LTH45worK4b3Y). You should see a green icon in the lower-right hand corner indicating successful uploads.
 
 ![](https://github.com/awong234/CT_sim/blob/master/assets/gdriveUpload.png)
 
@@ -62,8 +86,8 @@ When you go to upload **new** files, be sure to follow the next steps! Select al
 
 **SELECT CANCEL.**
 
-* If you select "Keep Separate", it will duplicate all of the files you have already uploaded. 
-* If you select "Update Existing", it will re-upload all of the files you have already uploaded, which will become tedious with greater amounts of files. 
+* If you select "Keep Separate", it will duplicate all of the files you have already uploaded. **We definitely don't want this.**
+* If you select "Update Existing", it will re-upload all of the files you have already uploaded, which will become tedious with greater amounts of files, but not harmful. 
 
 Be sure to upload your outputs frequently so that we have them all in case of system failure.
 
