@@ -8,9 +8,10 @@
 
 I suggest running these **ONE-BY-ONE** so you know exactly where you may encounter errors. This is also because the `registerUsers()` function is skipped over when running things in bulk.
 
-### Setup
+### Preparation
 
 You will need to install a few things before getting started, most importantly Ben's SPIM package. There are two ways to go about this.
+
 #### From a zip file
 
 This method is the easiest. There is a .zip file in the repo called `SPIM_0.1.zip`. 
@@ -18,7 +19,6 @@ This method is the easiest. There is a .zip file in the repo called `SPIM_0.1.zi
 Install the package using the `install.packages` dialog going through Tools > Install Packages > Install From > Package Archive File. Then select the .zip file. 
 
 The package *should* install without issue.
-
 
 #### Directly within R
 
@@ -30,6 +30,16 @@ Go get Rtools from the [link here](https://cran.r-project.org/bin/windows/Rtools
 
 Then, run the preparation block in the script (this is labeled). 
 
+#### Preparation block
+
+Once you have installed SPIM, **particularly on your first run** run each line of the preparation block one at a time. Each package will be installed if you don't have it, or loaded if you do. Make note of any errors. 
+
+When you get to the `source(functionsSQL.R)` line, the program *should* ask you to register your netID or initials - please follow the prompts! If you notice a mistake in your username, please adjust it by running 
+
+```
+registerUser(update = T)
+```
+
 ## Running the program - **RUNSCRIPT.R**
 
 Once you've installed the SPIM package and all the other requisite packages, you will need **only** to execute the contents in `RUNSCRIPT.R`. 
@@ -38,13 +48,9 @@ To do so, open the file in R and just hit the source button up top. You can also
 
 ![](https://github.com/awong234/CT_sim/blob/master/assets/sourceButton.png)
 
-The program *should* ask you to register your netID or initials - please follow the prompts! If you notice a mistake in your username, please adjust it by running 
+### Monitors
 
-```
-registerUser(update = T)
-```
-
-For those curious, you may use the Shiny app `taskMonitor.R` to observe the work that all the computers are doing. You will need to have the `shiny` library to execute, but the app will launch from either R or Rstudio. It will open a browser window with multiple tabs to observe the processes at work. 
+You will see things output into the `localOutput` folder as they are completed. For those who are more curious, you may use the Shiny app `taskMonitor.R` to observe the work that all the computers are doing. You will need to have the `shiny` library to execute, but the app will launch from either R or Rstudio. It will open a browser window with multiple tabs to observe the processes at work. 
 
 ### Customizing run
 
