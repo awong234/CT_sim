@@ -181,8 +181,8 @@ server = function(input, output, session){
     endTable = taskTable %>% left_join(userTable, by = c("owner" = "machineName")) %>% group_by(userName) %>% tally() %>% filter(!is.na(userName))
     
     endTable %>% ggplot() +
-      geom_col(aes(x = userName, y = n)) + 
-      scale_fill_viridis(option = "D") + 
+      geom_col(aes(x = userName, y = n, fill = userName, alpha = 0.7), width = 0.7) + 
+      scale_fill_viridis(option = "D", discrete = T) + 
       xlab("User Name") + ylab("Tasks Taken") + theme_bw() + 
       ggtitle("Tasks by User")
     
