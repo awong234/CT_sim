@@ -46,6 +46,18 @@ registerUser(update = T)
 
 For those curious, you may use the Shiny app `taskMonitor.R` to observe the work that all the computers are doing. You will need to have the `shiny` library to execute, but the app will launch from either R or Rstudio. It will open a browser window with multiple tabs to observe the processes at work. 
 
+### Customizing run
+
+Within the setup block you may customize a few things. Specifically, you can change how many cores your computer will run on, whether you want automatic uploading, and if so, where the paths to the files and cloud folder are. 
+
+#### Cores
+
+Set `cores = detectCores()` for maximum performance. Set `cores = 1` for minimum load (if you need the resources for something else).
+
+#### autoUpload
+
+As mentioned before, you can have the script manage your uploads for you by setting `autoUpload = T`. However, you will see a performance penalty because the `googledrive` package takes a long time to talk to the server. 
+
 ### Managing outputs
 
 When you've run the program for some time, you will see a folder called `localOutput` in the `CT_sim` directory, and `.Rdata` files within. There are two ways to get this up to the cloud, either automatically or manually. In either case, you will need to know the cloud folder link:
@@ -60,7 +72,7 @@ This option will probably be feasible only if you have unlimited google drive sp
 
 ![](https://github.com/awong234/CT_sim/blob/master/assets/googleDriveMigrate.png)
 
-If you want the script to manage your uploads automatically, within `RUNSCRIPT.R`, change the value of `autoUpload` to `TRUE`, around line 58. The file will then source `uploadOutput.R`. 
+If you want the script to manage your uploads automatically, within `RUNSCRIPT.R`, change the value of `autoUpload` to `TRUE`, within the setup block. The file will then source `uploadOutput.R`. 
 
 It will prompt you to generate a token, and at the same time bring up a browser window. 
 

@@ -1,7 +1,3 @@
-# UNDER CONSTRUCTION # UNDER CONSTRUCTION # UNDER CONSTRUCTION
-# # # UNDER CONSTRUCTION # UNDER CONSTRUCTION # UNDER CONSTRUCTION
-
-
 # Main script housing preparation of data, analysis of data, and exporting analysis elements.
 
 # Sections 
@@ -29,10 +25,6 @@ if(!require(devtools)){install.packages('devtools')}
 
 if(!require(SPIM) & find_rtools()){install_github('benaug/SPIM')}
 
-# First time run will take you to a web page to authorize `googledrive` to
-# access your drive account. You will want to make sure to have CT_sim_outputs
-# already in your drive in the top-most directory!
-
 source('writeSettings.R')
 source('build.cluster.R')
 source('simSCR.R')
@@ -52,6 +44,10 @@ cores = detectCores() - 1
 registerDoParallel(cores = cores) 
 
 # Automatic uploads? WARNING: VERY SLOW
+
+# First time run will take you to a web page to authorize `googledrive` to
+# access your drive account. You will want to make sure to have CT_sim_outputs
+# already in your drive in the top-most directory!
 
 autoUpload = F
 
@@ -94,7 +90,7 @@ while(length(reservedTasks) > 0){
     matches = (regmatches(x = files, m = gregexpr(pattern = '\\d+', text = files, perl = T)))
     done = do.call(what = rbind, args = lapply(matches, as.integer))
     
-    if( task %in% done){return(paste("Task", task, "was already completed"))}
+    if(task %in% done){return(paste("Task", task, "was already completed"))}
   
     settingsLocal = settings[task,] # Extract settings for task reserved
     
