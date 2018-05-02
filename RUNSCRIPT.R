@@ -49,6 +49,9 @@ source('functionsSQL.R')
 
 cores = detectCores() - 1 
 
+# How many tasks to do at once?
+numTasks = cores
+
 registerDoParallel(cores = cores) 
 
 # Automatic uploads? WARNING: VERY SLOW
@@ -81,7 +84,7 @@ extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y
 
 # PARALLEL once again. all settings combos / replicates are available to grab on server as per conversation on 2018-04-25.
 
-reservedTasks = reserveTasks(numTasks = cores)
+reservedTasks = reserveTasks(numTasks = numTasks)
 
 # DEBUG PURPOSES
 # reservedTasks = c(1,1001,2001,3001,4001)
@@ -218,7 +221,7 @@ while(length(reservedTasks) > 0){
   foreach(task = reservedTasks, .packages = c("Rcpp", "DBI","SPIM")) %dopar% {runFunc(task)}
   
   # Reserve some more tasks 
-  reservedTasks = reserveTasks(numTasks = cores)
+  reservedTasks = reserveTasks(numTasks = numTasks)
   
   if(autoUpload){uploadFiles(filePaths = paste0('localOutput/',files), drivePath = drivePath, par = F)}
   
