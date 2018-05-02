@@ -14,21 +14,19 @@ You will need to install a few things before getting started, most importantly B
 
 #### Directly within R
 
-The first - and most automatic - is to install Rtools and then run some commands that are already in the script. 
+The first is to install Rtools and then run some commands that are already in the script. 
 
 Go get Rtools from the [link here](https://cran.r-project.org/bin/windows/Rtools/Rtools34.exe). This link will go get the installer immediately. Run the installer as you would any other installer.
 
 Then, run the preparation block in the script (this is labeled). 
 
-#### From the repository
+#### From a zip file
 
-The second method will be to clone the repository from Ben's link: [https://github.com/benaug/SPIM](https://github.com/benaug/SPIM) .
+There is a .zip file in the repo called `SPIM_0.1.zip`. 
 
-Then, zip up the file and remember where you placed it.
+Install the package using the `install.packages` dialog going through Tools > Install Packages > Install From > Package Archive File. Then select the .zip file. 
 
-Then, use the `install.packages` dialog going through Tools > Install Packages > Install From > Package Archive File. Then select the .zip file. 
-
-The package *should* install without issue, but I personally could not get this to work.
+The package *should* install without issue.
 
 ## Running the program - **RUNSCRIPT.R**
 
