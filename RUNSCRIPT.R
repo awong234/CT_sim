@@ -116,7 +116,29 @@ while(length(reservedTasks) > 0){
     
     # Simulate encounters ---------------------------------------------------------------------------------
     # This is actually SCR AND OCC data. Look at the return values in the simSCR.R script to see why.
-    scrData = simSCR(D = D, lam0 = lam0, sigma = sigma, K = K, X = X, buff = buff, thinning.rate1 = thinRate1, thinning.rate2 = thinRate2, grid.space = grid.space, seed = task)
+    
+    seed = task
+    
+    scrData = simSCR(D = D, lam0 = lam0, sigma = sigma, K = K, X = X, buff = buff, thinning.rate1 = thinRate1, thinning.rate2 = thinRate2, grid.space = grid.space, seed = seed)
+    
+    if(scrData$sumscap < 2){
+      
+      attempt = 1
+    
+      while(scrData$sumscap < 2 & attempt < 11){
+        
+        seed = seed + 1
+    
+        scrData = simSCR(D = D, lam0 = lam0, sigma = sigma, K = K, X = X, buff = buff, thinning.rate1 = thinRate1, thinning.rate2 = thinRate2, grid.space = grid.space, seed = seed)
+      
+        attempt = attempt + 1
+      
+    }
+      
+    }
+    
+    
+    
     
     # I am deciding not to save data since all data can be generate at a later time using the settings grid and the seeds.
     
