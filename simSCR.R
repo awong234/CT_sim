@@ -63,12 +63,13 @@ simSCR<- function(D = 0.83333,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 
        }
      }
    }
-   y.use<- y.use[1:N, 1:nrow(X), 1:K]
+   
+   if(dim(s)[1] > 1){y.use<- y.use[1:N, 1:nrow(X), 1:K]}else{y.use = y.use}
 
    # compute total occupancy on the landscape by evaluating on a fine grid (Xgrid above)
    lam.grid<- lamd[1:N, (nrow(X)+1):J]
    # FAILS WITH ONE INDIVIDUAL. 
-   if(dim(s)[1] > 1){
+   if(dim(s)[1] > 1){  # Safety for when N = 1
      lam.gridJ=colSums(lam.grid) 
    }else{
      lam.gridJ = lam.grid
@@ -80,12 +81,11 @@ simSCR<- function(D = 0.83333,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 
    # compute total occupancy probability on the trap locations
    # This is not used for anything, ignore
    lamd<- lamd[1:N, 1:nrow(X)]
-   if(dim(s)[1] > 1){
-     lam.gridJ=colSums(lamd) 
+   if(dim(s)[1] > 1){  # Safety for when N = 1
+     lamJ=colSums(lamd) 
    }else{
-     lam.gridJ = lamd
+     lamJ = lamd
    }
-   lamJ=colSums(lamd)
    p=1-exp(-lamJ)
    psi=1-(1-p)^K
 
@@ -110,7 +110,7 @@ simSCR<- function(D = 0.83333,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 
    y<- y.scr
    caps=apply(y,1,sum)
    idx=order(caps,decreasing=TRUE)
-   y=y[idx,,]
+   if(length(idx) > 1){y = y=y[idx,,]}else{y=y} # Safety for when N = 1
    s=s[idx,]
    n=sum(caps>0)
    y=y[rowSums(y)>0,,]
