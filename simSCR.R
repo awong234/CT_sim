@@ -29,8 +29,8 @@ simSCR<- function(D = 0.83333,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 
    ymin<- min(X[,2])-buff
    ymax<- max(X[,2])+buff
 
-area<- (ymax-ymin)*(xmax-xmin)
-N<- round(D*area,0)
+    area<- (ymax-ymin)*(xmax-xmin)
+    N<- round(D*area,0)
 
    # Make a fine grid for computing average occupancy over the state-space
     Xgrid<- expand.grid(seq(xmin,xmax,grid.space), seq(ymin,ymax,grid.space))
@@ -50,7 +50,7 @@ N<- round(D*area,0)
    Xgrid = as.matrix(Xgrid)
    attr(x = Xgrid, which = 'dimnames') = NULL
    
-   D<- e2dist(s,rbind(X,Xgrid) )   # compute distance between each activity center and each trap
+   D<- e2dist(s,rbind(X,Xgrid))   # compute distance between each activity center and each trap
    # use intensity
    lamd<- lam0*exp(-D*D/(2*sigma*sigma))
    J<- nrow(X) + nrow(Xgrid)
@@ -67,7 +67,13 @@ N<- round(D*area,0)
 
    # compute total occupancy on the landscape by evaluating on a fine grid (Xgrid above)
    lam.grid<- lamd[1:N, (nrow(X)+1):J]
-   lam.gridJ=colSums(lam.grid)
+   # FAILS WITH ONE INDIVIDUAL. 
+   if(dim(s)[1] > 1){
+     lam.gridJ=colSums(lam.grid) 
+   }else{
+     lam.gridJ = lam.grid
+   }
+   
    p.grid=1-exp(-lam.gridJ)
    psi.grid=1-(1-p.grid)^K
 
