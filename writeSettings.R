@@ -82,7 +82,3 @@ writeSettings <- function(nreps) {
   return(settingsLong)
   
 }
-
-settings = writeSettings(nreps = 500)
-
-save(file = 'settings.Rdata', list = c('settings'))
