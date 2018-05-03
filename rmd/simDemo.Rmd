@@ -234,7 +234,7 @@ for(K in 1:K){
   gridLamd = cbind.data.frame(Xgrid, colSums(y.use[,,K]))
   colnames(gridLamd) = c('x', 'y', 'eLamd')
   
-  Cairo::Cairo(file = paste0('img', K,'.png'), dpi = 100)
+  # Cairo::Cairo(file = paste0('img', K,'.png'), dpi = 100)
   print(
   ggplot() + 
     geom_raster(data = gridLamd, aes(x = x, y = y, fill = eLamd)) + 
@@ -246,7 +246,7 @@ for(K in 1:K){
     geom_hline(yintercept = c(ymin, ymax)) + 
     coord_equal() + theme_bw()
   )
-  dev.off()
+  # dev.off()
   
 }
 
@@ -285,7 +285,7 @@ Finally, probability of occupancy increases with increasing `p_g`, as well as mo
 
 The code to perform this is as follows (again, slightly adapted for clarity):
 
-```{r, eval = F, echo = T}
+```{r, eval = T, echo = T}
 
 lamd = lam0*exp(-D_grid*D_grid/(2*sigma*sigma)) # lam0, D_grid, sigma all defined earlier.
 lam.j = colSums(lamd) # Sum over all individuals - this is the figure of expected use above.
@@ -337,3 +337,58 @@ for(i in 1:N){
 
 ```
 
+Notice that `y.det` -- occupancy detection data -- is a thinned version of `y.use`, and `y.scr` -- SCR data -- is a further thinned version of `y.det`. Conceptually, when you do an SCR survey you always start off collecting occupancy data, which is then thinned by some rate when you're acquiring individual ID, either by camera images, DNA, etc.
+
+The next few lines produce some summaries of the `y.scr` or `y.occ` data, and format them in such a way that an individual is either detected at a trap on occasion K, or not (1 or 0). Additionally, individuals with all-0 encounter histories are removed from the dataset (you could never observe those in real life). Other things are made, such as during the section "Count spatial recaps": `scaps` provides a view of the number of spatial recaptures of individuals, `nscap` provides the number of individuals with *any* spatial recaps, and `sumscap` provides the total number of spatial recaps. 
+
+```{r, echo = T}
+
+
+#convert SCR data set from counts to presence/absense
+y.scr[y.scr>0]=1
+
+#remove uncaptured individuals in SCR data set. sort.
+y<- y.scr
+caps=apply(y,1,sum)
+idx=order(caps,decreasing=TRUE)
+y=y[idx,,]
+s=s[idx,]
+n=sum(caps>0)
+y=y[rowSums(y)>0,,]
+#Count spatial recaps
+y2D=apply(y,c(1,2),sum)
+scaps=rowSums(1*(y2D>0))
+scaps[scaps>0]=scaps[scaps>0]-1 #spatial recaps per ind
+nscap=sum(scaps>0) #Total number of individuals with spatial recaps
+sumscap=sum(scaps) #Total number of spatial recaps. Use this to screen data sets.
+
+```
+
+Occupancy data is also condensed; since `y.det` has a row for each individual, and in occupancy studies you don't have this information, you need to aggregate it. The first line after "Make occupancy data set" does just this by asking, basically, did a trap on a particular occasion find any animals? What you get as a result is a matrix with 1's and 0's for yes's and no's, indexed by trap and occasion. The second line for the occupancy stuff adds up those 1's and 0's over the occasions, to see how many detections you had, per trap, for the entire survey. What you get as a result is now a 1D vector of detections at every trap.
+
+```{r}
+
+#make occupancy data set
+y.occ=1*(apply(y.det,c(2,3),sum)>0) # asks "which trap"
+y.occ=rowSums(y.occ) # sum over occasions
+
+```
+
+## Get occupancy for comparison 
+
+Finally, the script gets a number for occupancy, so that we can compare it against our analysis later. 
+
+```{r, echo = T, eval = T}
+
+#estimate occupancy p
+   sites.used=sum(apply(y.use,2,sum)>0)#sites use at least once
+   p.bar=sum(y.occ)/(sites.used*K) #estimated occupancy p
+   out<-list(y.use=y.use,y.det=y.det,y.occ=y.occ,y.scr=y,s=s,X=X,K=K,buff=buff, # DATA AND SETTINGS HERE
+             n=n,nscap=nscap,sumscap=sumscap,psi.bar = mean(psi.grid),p.bar=p.bar,N = N # POPULATION SUMMARIES
+             )
+   
+```
+
+The population above has a `psi.bar` value of `r round(out$psi.bar, 2)`. Recall the formula above for `psi.bar`: this is the expected occupancy probability over the entire area, over `r K` occasions. Basically, if you went out to a random pixel and sampled it `r K` times, you would expect to see an animal `r round(out$psi.bar, 2)` times, assuming detection is perfect.
+
+All of these data, and summaries of the population are returned for later analysis.
