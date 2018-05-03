@@ -70,7 +70,7 @@ writeSettings <- function(nreps) {
   
   # any(settings %>% duplicated()) # No duplicates
   
-  settings = settings %>% mutate(settingID = seq(1,nrow(.)))
+  settings = settings %>% mutate(settingID = seq(1,nrow(.))) %>% filter(spaceOut >= spaceIn)
   
   # NOW duplicate nreps times
   
@@ -83,4 +83,4 @@ writeSettings <- function(nreps) {
 
 settings = writeSettings(nreps = 500)
 
-write.csv(settings, file = 'settingsMaster.csv', row.names = F)
+# write.csv(settings, file = 'settingsMaster.csv', row.names = F)
