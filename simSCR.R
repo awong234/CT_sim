@@ -80,6 +80,11 @@ simSCR<- function(D = 0.83333,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 
    # compute total occupancy probability on the trap locations
    # This is not used for anything, ignore
    lamd<- lamd[1:N, 1:nrow(X)]
+   if(dim(s)[1] > 1){
+     lam.gridJ=colSums(lamd) 
+   }else{
+     lam.gridJ = lamd
+   }
    lamJ=colSums(lamd)
    p=1-exp(-lamJ)
    psi=1-(1-p)^K
