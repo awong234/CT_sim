@@ -82,3 +82,5 @@ writeSettings <- function(nreps) {
 }
 
 settings = writeSettings(nreps = 500)
+
+write.csv(settings, file = 'settingsMaster.csv', row.names = F)
