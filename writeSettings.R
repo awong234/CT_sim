@@ -1,4 +1,6 @@
 if(!require(dplyr)){install.packages('dplyr')}
+if(!require(RSQLite)){install.packages('RSQLite')}
+if(!require(dbplyr)){install.packages('dbplyr')}
 
 # Settings for simulations
 # This will be a data frame with 1 row per task, and columns specifying simulation settings. 
@@ -83,4 +85,4 @@ writeSettings <- function(nreps) {
 
 settings = writeSettings(nreps = 500)
 
-# write.csv(settings, file = 'settingsMaster.csv', row.names = F)
+save(file = 'settings.Rdata', list = c('settings'))
