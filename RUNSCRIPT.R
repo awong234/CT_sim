@@ -72,7 +72,10 @@ drivePath = 'CT_sim_outputs/'
 
 # Extract Settings ------------------------------------------------------------------------------------
 
-load('settings.Rdata')
+if(!file.exists('settings.Rdata')){
+  settings = writeSettings(nreps = 500)
+  save(settings, 'settings.Rdata')
+}else{load('settings.Rdata')}
 
 # Function `assign`s each column in `settings` to an object in the environment
 extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y, pos = 1)}, x = names(what), y = what))}
