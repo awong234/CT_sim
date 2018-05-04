@@ -22,16 +22,22 @@ setWDHere()
 
 # Preparation block ------------------------------------------------------------------------------------------------------------------------------
 
-if(!require(doParallel)){install.packages('doParallel')}
-if(!require(googledrive)){install.packages('googledrive')}
-if(!require(parallel)){install.packages('parallel')}
-if(!require(Rcpp)){install.packages('Rcpp')}
-if(!require(devtools)){install.packages('devtools')}
+# Second time around loads the packages if they needed to be installed . . . 
+
+for(i in 1:2){
+  if(!require(doParallel)){install.packages('doParallel')}
+  if(!require(googledrive)){install.packages('googledrive')}
+  if(!require(parallel)){install.packages('parallel')}
+  if(!require(Rcpp)){install.packages('Rcpp')}
+  if(!require(devtools)){install.packages('devtools')}
+}
 
 # Install spim package. If you do it this way, you will need to install Rtools
 # v3.4 (find_rtools() Checks for this). Link in github front page.
 
 if(!require(SPIM) & find_rtools()){install_github('benaug/SPIM')}
+
+library(SPIM)
 
 source('writeSettings.R')
 source('build.cluster.R')

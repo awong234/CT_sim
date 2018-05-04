@@ -1,6 +1,8 @@
-if(!require(dplyr)){install.packages('dplyr')}
-if(!require(RSQLite)){install.packages('RSQLite')}
-if(!require(dbplyr)){install.packages('dbplyr')}
+
+for(i in 1:2){
+  if(!require(dplyr)){install.packages('dplyr')}
+}
+
 
 # Settings for simulations
 # This will be a data frame with 1 row per task, and columns specifying simulation settings. 

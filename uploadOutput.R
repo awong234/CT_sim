@@ -5,8 +5,9 @@
 # Drag and drop is super fast and we won't be worrying about overwrites since
 # all files will have unique names.
 
+for(i in 1:2){
 if(!require(googledrive)){install.packages('googledrive')}
-
+}
 googledrive::drive_auth()
 
 # Example files

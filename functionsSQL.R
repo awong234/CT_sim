@@ -7,8 +7,11 @@
 # Trying new version with `DBI` and a custom SQL server. Git was too slow, data
 # needs to be able to be edited in place, instead of by replacing files.
 
-if(!require(DBI)){install.packages('DBI')}
-if(!require(odbc)){install.packages('odbc')}
+for(i in 1:2){
+  if(!require(DBI)){install.packages('DBI')}
+  if(!require(odbc)){install.packages('odbc')}
+}
+
 
 reserveTasks = function(numTasks = NULL){
   
