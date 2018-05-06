@@ -29,17 +29,14 @@ for(i in 1:2){
   if(!require(googledrive)){install.packages('googledrive')}
   if(!require(parallel)){install.packages('parallel')}
   if(!require(Rcpp)){install.packages('Rcpp')}
-  if(!require(devtools)){install.packages('devtools')}
+  if(!require(RSQLite)){install.packages('RSQLite')}
+  if(!require(dbplyr)){install.packages('dbplyr')}
+  library(SPIM)
 }
 
 # Install spim package. If you do it this way, you will need to install Rtools
 # v3.4 (find_rtools() Checks for this). Link in github front page.
 
-if(!require(SPIM) & find_rtools()){install_github('benaug/SPIM')}
-
-library(SPIM)
-
-source('writeSettings.R')
 source('build.cluster.R')
 source('simSCR.R')
 source('functionsSQL.R')
@@ -75,13 +72,18 @@ files = dir(path = 'localOutput/', pattern = ".Rdata")
 # Where did you put the shared folder in your drive?
 drivePath = 'CT_sim_outputs/'
 
-
 # Extract Settings ------------------------------------------------------------------------------------
 
-if(!file.exists('settings.Rdata')){
-  settings = writeSettings(nreps = 500)
-  save(settings, 'settings.Rdata')
-}else{load('settings.Rdata')}
+# Are you running small jobs? i.e. fewer than 3 cores
+
+smallJobs = ifelse(test = cores <= 2, yes = T, no = F)
+
+if(smallJobs){
+  if(!file.exists('settings.Rdata')){
+    settings = writeSettings(nreps = 500)
+    save(settings, 'settings.Rdata')
+  }else{load('settings.Rdata')}
+}
 
 # Function `assign`s each column in `settings` to an object in the environment
 extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y, pos = 1)}, x = names(what), y = what))}
@@ -104,15 +106,20 @@ while(length(reservedTasks) > 0){
     
     # Will source with Ben's SPIM package - otherwise source here.
     if(!require(SPIM)){sourceCpp("intlikRcpp.cpp")}
-  
-    # Check for tasks already done (if job cancelled)
-    files = dir(path = 'localOutput', pattern = ".Rdata")
-    matches = (regmatches(x = files, m = gregexpr(pattern = '\\d+', text = files, perl = T)))
-    done = do.call(what = rbind, args = lapply(matches, as.integer))
     
-    if(task %in% done){return(paste("Task", task, "was already completed"))}
+    if(smallJobs){
+      settingsLocal = settings[task,] # Extract settings for task reserved
+    }else{
+      
+      conLocal = dbConnect(SQLite(), 'settings.sqlite')
+      
+      settingsLocal = dbGetQuery(conn = conLocal, statement = paste0('SELECT * FROM settings WHERE taskID = ', task))
+      
+      dbDisconnect(conLocal)
+      
+    }
   
-    settingsLocal = settings[task,] # Extract settings for task reserved
+    
     
     extract(settingsLocal) # Assign all components (D, lam0, etc.) to scoped to FUNCTION environment - won't affect other tasks.
     
@@ -249,7 +256,7 @@ while(length(reservedTasks) > 0){
     
   }
   
-  foreach(task = reservedTasks, .packages = c("Rcpp", "DBI","SPIM")) %dopar% {runFunc(task)}
+  foreach(task = reservedTasks, .packages = c("Rcpp", "RSQLite", "DBI","SPIM")) %dopar% {runFunc(task)}
   
   # Reserve some more tasks 
   reservedTasks = reserveTasks(numTasks = numTasks)
@@ -257,4 +264,3 @@ while(length(reservedTasks) > 0){
   if(autoUpload){uploadFiles(filePaths = paste0('localOutput/',files), drivePath = drivePath, par = F)}
   
 }
-
