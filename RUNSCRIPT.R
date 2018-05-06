@@ -117,7 +117,6 @@ while(length(reservedTasks) > 0){
       return(paste("Task", task, "was already completed"))
       }
     
-    
     if(smallJobs){
       settingsLocal = settings[task,] # Extract settings for task reserved
     }else{
