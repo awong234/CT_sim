@@ -23,7 +23,7 @@ reserveTasks = function(numTasks = NULL){
   
   con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql6.gear.host;Database=tasklistntres;Uid=tasklistntres;Pwd=Gy435_eN5-Ry;")
   
-  # # # # Check to see if tasks taken by computer are not done yet - in event of unexpected shutdowns. # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  2# # # # Check to see if tasks taken by computer are not done yet - in event of unexpected shutdowns. # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
   # Is your computer 'working on' an event at the time of this check? If so, it never finished from the previous startup.
   
@@ -58,7 +58,10 @@ reserveTasks = function(numTasks = NULL){
   
   if(is.null(numTasks)){numTasks = parallel::detectCores()-1} # Default numTasks to number of cores.
   
-  statement = paste0("UPDATE TOP (", numTasks, ") tasklistntres SET inProgress = 1, owner = \'", Sys.info()['nodename'], "\', timeStarted = ", as.integer(Sys.time()), " WHERE inProgress = 0 AND completed = 0")
+  statement = paste0("WITH q AS (SELECT TOP ", numTasks, " * FROM tasklistntres WHERE inProgress = 0 AND completed = 0 ORDER BY taskID) UPDATE q SET inProgress = 1, owner = \'", Sys.info()['nodename'], "\', timeStarted = ", as.integer(Sys.time()))
+  
+  # Old version. Not ordered.
+  # statement = paste0("UPDATE TOP (", numTasks, ") tasklistntres SET inProgress = 1, owner = \'", Sys.info()['nodename'], "\', timeStarted = ", as.integer(Sys.time()), " WHERE inProgress = 0 AND completed = 0")
   
   executeWithRestart(SQL_statement = statement, con = con)
   
@@ -113,7 +116,7 @@ printDB = function(){ # perform a simple read on the server database
   
   con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql6.gear.host;Database=tasklistntres;Uid=tasklistntres;Pwd=Gy435_eN5-Ry;")
   
-  taskList = dbReadTable(conn = con, name = 'tasklistntres')
+  taskList = dbGetQuery(conn = con, statement = "SELECT TOP 100 * FROM tasklistntres ORDER BY taskID")
   
   dbDisconnect(con)
   
