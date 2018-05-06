@@ -33,13 +33,11 @@ printDBsafe = function(con, name){ # perform a simple read on the server databas
   return(taskList)
 }
 
-regressions = function(taskTable, k){
+regressions = function(taskTable, k, maxtasks){
   
   taskTable = taskTable %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
                                    timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA)
   )
-  
-  maxTasks = nrow(taskTable)
   
   endTimes = taskTable %>% filter(completed == 1) %>% mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% select(taskID, timeStarted, timeEnded, owner) %>% melt(id.vars = c('taskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value) %>% filter(StartEnd == "timeEnded")
   
@@ -141,9 +139,13 @@ server = function(input, output, session){
                         uid = 'tasklistntres',
                         pwd = 'Gy435_eN5-Ry')
   
-  taskTable = printDBsafe(con = con, name = 'tasklistntres')
+  taskTable = dbGetQuery(conn = con, statement = "SELECT * FROM tasklistntres WHERE owner <> 'NONE'")
   
-  maxTasks = taskTable$taskID %>% max
+  if(nrow(taskTable) == 0){
+    taskTable = dbGetQuery(conn = con, statement = "SELECT TOP 1000 * FROM tasklistntres ORDER BY taskID")
+  }
+  
+  maxTasks = dbGetQuery(conn = con, statement = "SELECT COUNT(*) FROM tasklistntres")
   
   output$user = renderText(expr = {
     
@@ -194,8 +196,8 @@ server = function(input, output, session){
     
     taskTable = formatTable()
     
-    text1 = paste0("<h3>",sum(taskTable$completed), " of ", nrow(taskTable), " tasks completed.</h3>")
-    text2 = paste0("<h4>", round(100*sum(taskTable$completed) / nrow(taskTable), 2), "% complete.</h4>")
+    text1 = paste0("<h3>",sum(taskTable$completed), " of ", maxTasks, " tasks completed.</h3>")
+    text2 = paste0("<h4>", round(100*sum(taskTable$completed) / maxTasks, 2), "% complete.</h4>")
     
     HTML(paste(text1, text2, sep = "<br/>"))
     
@@ -226,7 +228,7 @@ server = function(input, output, session){
     startEnd = taskTable_formatted %>% filter(completed == 1 | inProgress == 1) %>% mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% 
       select(taskID, timeStarted, timeEnded, owner) %>% melt(id.vars = c('taskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value)
     
-    out = regressions(taskTable = taskTable, k = input$k)
+    out = regressions(taskTable = taskTable, k = input$k, maxtasks = maxtasks)
     
     newdata = out$gam
     
@@ -269,19 +271,19 @@ server = function(input, output, session){
     
   })
   
-  output$progressBar = renderPlot(expr = {
-    
-    taskTable = formatTable()
-    
-    taskTable %>% select(taskID, inProgress, completed) %>% group_by(taskID) %>% summarize(status = ifelse(inProgress == 0 & completed == 0, "Not Started", ifelse(inProgress == 1, "In Progress", "Complete"))) %>% 
-    
-    ggplot() + 
-      geom_col(aes(x = "Tasks", y = taskID, fill = factor(status, levels = c("Not Started", "In Progress", "Complete")))) + coord_flip() +
-      theme_bw() + scale_fill_manual(values = c('gray50', 'orange', 'forestgreen'), name = 'status') + theme(
-        axis.title = element_blank(),
-        axis.text = element_blank()
-      )
-  }, height = 100)
+  # output$progressBar = renderPlot(expr = {
+  #   
+  #   taskTable = formatTable()
+  #   
+  #   taskTable %>% select(taskID, inProgress, completed) %>% group_by(taskID) %>% summarize(status = ifelse(inProgress == 0 & completed == 0, "Not Started", ifelse(inProgress == 1, "In Progress", "Complete"))) %>% 
+  #   
+  #   ggplot() + 
+  #     geom_col(aes(x = "Tasks", y = taskID, fill = factor(status, levels = c("Not Started", "In Progress", "Complete")))) + coord_flip() +
+  #     theme_bw() + scale_fill_manual(values = c('gray50', 'orange', 'forestgreen'), name = 'status') + theme(
+  #       axis.title = element_blank(),
+  #       axis.text = element_blank()
+  #     )
+  # }, height = 100)
   
 }
 
