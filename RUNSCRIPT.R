@@ -107,6 +107,17 @@ while(length(reservedTasks) > 0){
     # Will source with Ben's SPIM package - otherwise source here.
     if(!require(SPIM)){sourceCpp("intlikRcpp.cpp")}
     
+    # Check for tasks already done (if job cancelled)
+    files = dir(path = 'localOutput', pattern = ".Rdata")
+    matches = (regmatches(x = files, m = gregexpr(pattern = '\\d+', text = files, perl = T)))
+    done = do.call(what = rbind, args = lapply(matches, as.integer))
+    
+    if(task %in% done){
+      updateTaskCompleted(reservedTasks = task)
+      return(paste("Task", task, "was already completed"))
+      }
+    
+    
     if(smallJobs){
       settingsLocal = settings[task,] # Extract settings for task reserved
     }else{
@@ -136,25 +147,6 @@ while(length(reservedTasks) > 0){
     seed = task
     
     scrData = simSCR(D = D, lam0 = lam0, sigma = sigma, K = K, X = X, buff = buff, thinning.rate1 = thinRate1, thinning.rate2 = thinRate2, grid.space = grid.space, seed = seed)
-    
-    if(scrData$sumscap < 2){
-      
-      attempt = 1
-    
-      while(scrData$sumscap < 2 & attempt < 11){
-        
-        seed = seed + 1
-    
-        scrData = simSCR(D = D, lam0 = lam0, sigma = sigma, K = K, X = X, buff = buff, thinning.rate1 = thinRate1, thinning.rate2 = thinRate2, grid.space = grid.space, seed = seed)
-      
-        attempt = attempt + 1
-      
-    }
-      
-    }
-    
-    
-    
     
     # I am deciding not to save data since all data can be generate at a later time using the settings grid and the seeds.
     
