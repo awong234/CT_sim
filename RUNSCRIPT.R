@@ -107,6 +107,14 @@ while(length(reservedTasks) > 0){
     # Will source with Ben's SPIM package - otherwise source here.
     if(!require(SPIM)){sourceCpp("intlikRcpp.cpp")}
     
+    # Check for tasks already done (if job cancelled)
+    files = dir(path = 'localOutput', pattern = ".Rdata")
+    matches = (regmatches(x = files, m = gregexpr(pattern = '\\d+', text = files, perl = T)))
+    done = do.call(what = rbind, args = lapply(matches, as.integer))
+    
+    if(task %in% done){return(paste("Task", task, "was already completed"))}
+    
+    
     if(smallJobs){
       settingsLocal = settings[task,] # Extract settings for task reserved
     }else{
