@@ -74,17 +74,6 @@ drivePath = 'CT_sim_outputs/'
 
 # Extract Settings ------------------------------------------------------------------------------------
 
-# Are you running small jobs? i.e. fewer than 3 cores
-
-smallJobs = ifelse(test = cores <= 2, yes = T, no = F)
-
-if(smallJobs){
-  if(!file.exists('settings.Rdata')){
-    settings = writeSettings(nreps = 500)
-    save(settings, 'settings.Rdata')
-  }else{load('settings.Rdata')}
-}
-
 # Function `assign`s each column in `settings` to an object in the environment
 extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y, pos = 1)}, x = names(what), y = what))}
 
@@ -116,20 +105,12 @@ while(length(reservedTasks) > 0){
       updateTaskCompleted(reservedTasks = task)
       return(paste("Task", task, "was already completed"))
       }
+      
+    conLocal = dbConnect(SQLite(), 'settings.sqlite')
     
-    if(smallJobs){
-      settingsLocal = settings[task,] # Extract settings for task reserved
-    }else{
-      
-      conLocal = dbConnect(SQLite(), 'settings.sqlite')
-      
-      settingsLocal = dbGetQuery(conn = conLocal, statement = paste0('SELECT * FROM settings WHERE taskID = ', task))
-      
-      dbDisconnect(conLocal)
-      
-    }
-  
+    settingsLocal = dbGetQuery(conn = conLocal, statement = paste0('SELECT * FROM settings WHERE taskID = ', task))
     
+    dbDisconnect(conLocal)
     
     extract(settingsLocal) # Assign all components (D, lam0, etc.) to scoped to FUNCTION environment - won't affect other tasks.
     
