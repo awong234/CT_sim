@@ -3,12 +3,10 @@
 # For ease of use, install SPIM manually using the Tools > Install Packages Dialog.
 
 for(i in 1:2){
-  # Install SPIM automatically from Github.
-  if(!require(devtools)){install.packages('devtools')}
-  if(!require(SPIM) & find_rtools()){install_github('benaug/SPIM')}
   # Install and load LOCAL database stuff.
   if(!require(RSQLite)){install.packages('RSQLite')}
   if(!require(dbplyr)){install.packages('dbplyr')}
+  if(!require(Rcpp)){install.packages('Rcpp')}
 }
 
 source('writeSettings.R')
@@ -26,3 +24,10 @@ dbWriteTable(conn = con, name = 'settings', value = settings)
 
 # Close connection
 dbDisconnect(conn = con)
+
+
+# Uncomment the following ONLY if you cannot install SPIM via .zip file. Unlikely.
+
+# # Install SPIM automatically from Github.
+# if(!require(devtools)){install.packages('devtools')}
+# if(!require(SPIM) & find_rtools()){install_github('benaug/SPIM')}
