@@ -111,7 +111,7 @@ simSCR<- function(D = 0.83333,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 
    caps=apply(y,1,sum)
    
    # Safety for when caps == 0. For R versions < 3.4
-   if(caps == 0){
+   if(all(caps == 0)){
      n = 0
      nscap = 0
      sumscap = 0
