@@ -109,17 +109,26 @@ simSCR<- function(D = 0.83333,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 
    #remove uncaptured individuals in SCR data set. sort.
    y<- y.scr
    caps=apply(y,1,sum)
-   idx=order(caps,decreasing=TRUE)
-   if(length(idx) > 1){y = y=y[idx,,]}else{y=y} # Safety for when N = 1
-   s=s[idx,]
-   n=sum(caps>0)
-   y=y[rowSums(y)>0,,]
-   #Count spatial recaps
-   y2D=apply(y,c(1,2),sum)
-   scaps=rowSums(1*(y2D>0))
-   scaps[scaps>0]=scaps[scaps>0]-1 #spatial recaps per ind
-   nscap=sum(scaps>0) #Total number of individuals with spatial recaps
-   sumscap=sum(scaps) #Total number of spatial recaps. Use this to screen data sets.
+   
+   # Safety for when caps == 0. For R versions < 3.4
+   if(caps == 0){
+     n = 0
+     nscap = 0
+     sumscap = 0
+   }else{
+     idx=order(caps,decreasing=TRUE)
+     y = y[idx,,]
+     s=s[idx,]
+     n=sum(caps>0)
+     y=y[rowSums(y)>0,,]
+     #Count spatial recaps
+     y2D=apply(y,c(1,2),sum)
+     scaps=rowSums(1*(y2D>0))
+     scaps[scaps>0]=scaps[scaps>0]-1 #spatial recaps per ind
+     nscap=sum(scaps>0) #Total number of individuals with spatial recaps
+     sumscap=sum(scaps) #Total number of spatial recaps. Use this to screen data sets.
+   }
+   
    #estimate occupancy p
    sites.used=sum(apply(y.use,2,sum)>0)#sites use at least once
    p.bar=sum(y.occ)/(sites.used*K) #estimated occupancy p
