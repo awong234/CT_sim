@@ -14,7 +14,8 @@ source('writeSettings.R')
 # Get settings list
 settings = writeSettings(nreps = 500)
 
-save(list = c("settings"), file = 'settings.Rdata')
+# Have moved away from the .Rdata file.
+# save(list = c("settings"), file = 'settings.Rdata')
 
 # Open local sql connection
 con = dbConnect(SQLite(), 'settings.sqlite')
