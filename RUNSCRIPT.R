@@ -1,3 +1,19 @@
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+# PLEASE RUN THIS BY ITSELF TO REGISTER # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+source('functionsSQL.R')
+
+# run this if your user name has an error
+# registerUser(update = T) 
+
+# YOU ONLY NEED TO DO THIS ONCE # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+# THANK YOU! # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 # Main script housing preparation of data, analysis of data, and exporting analysis elements.
 
 # Sections 
@@ -39,7 +55,6 @@ for(i in 1:2){
 
 source('build.cluster.R')
 source('simSCR.R')
-source('functionsSQL.R')
 
 # Setup block ----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -71,12 +86,6 @@ files = dir(path = 'localOutput/', pattern = ".Rdata")
 
 # Where did you put the shared folder in your drive?
 drivePath = 'CT_sim_outputs/'
-
-# Extract Settings ------------------------------------------------------------------------------------
-
-# Function `assign`s each column in `settings` to an object in the environment
-extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y, pos = 1)}, x = names(what), y = what))}
-
 
 # Analysis loop ----------------------------------------------------------------------------------------------------
 
