@@ -43,7 +43,7 @@ regressions = function(taskTable, k, maxtasks){
   
   lm1 = lm(formula = Time %>% as.numeric() ~ taskID, data = endTimes)
   
-  newdata = data.frame('taskID' = seq(1, maxTasks), 'predDate' = NA)
+  newdata = data.frame('taskID' = seq(1, nrow(taskTable) + 1000), 'predDate' = NA)
   
   predictedDates = newdata
   
@@ -59,7 +59,10 @@ regressions = function(taskTable, k, maxtasks){
   
   seData = data.frame('taskID' = taskTable$taskID, 'SE' = se)
   
-  return(list("lm" = predictedDates, "gam" = newdata, "gamModel" = m, "se" = seData))
+  finalDate = data.frame('taskID' = maxTasks, 'Time' = NA)
+  finalDate$Time = predict.gam(object = m, newdata = finalDate) %>% as.numeric() %>% as.POSIXct(origin = origin)
+  
+  return(list("lm" = predictedDates, "gam" = newdata, "gamModel" = m, "se" = seData, 'finalDate' = finalDate))
   
 }
 
@@ -145,7 +148,7 @@ server = function(input, output, session){
     taskTable = dbGetQuery(conn = con, statement = "SELECT TOP 1000 * FROM tasklistntres ORDER BY taskID")
   }
   
-  maxTasks = dbGetQuery(conn = con, statement = "SELECT COUNT(*) FROM tasklistntres")
+  maxTasks = dbGetQuery(conn = con, statement = "SELECT COUNT(*) FROM tasklistntres") %>% as.integer()
   
   output$user = renderText(expr = {
     
