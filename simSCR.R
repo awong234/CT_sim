@@ -115,10 +115,14 @@ simSCR<- function(D = 0.83333,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 
      n = 0
      nscap = 0
      sumscap = 0
-   }else{
-     idx=order(caps,decreasing=TRUE)
-     y = y[idx,,]
-     s=s[idx,]
+   }else{ # Safety for when caps == 1. Re-ordering vector only matters when caps > 1. Indexing on line 127 failed after re-ordering due to reduced dimension.
+     if(caps > 1){
+       idx=order(caps,decreasing=TRUE)
+       y = y[idx,,] 
+       s=s[idx,]
+     }else{
+       y = y
+     }
      n=sum(caps>0)
      y=y[rowSums(y)>0,,]
      #Count spatial recaps
