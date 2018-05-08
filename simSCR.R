@@ -274,4 +274,10 @@ runFunc = function(task){
     
     return(paste("Task", task, "now complete and saved to file"))
         
-  }
+}
+
+
+# Extract Settings ------------------------------------------------------------------------------------
+
+# Function `assign`s each column in `settings` to an object in the environment
+extract = function(what){invisible(Map(f = function(x,y){assign(x = x, value = y, pos = 1)}, x = names(what), y = what))}
