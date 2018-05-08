@@ -6,3 +6,5 @@ localOutput/
 reservedTasks.csv
 .httr-oauth
 *.csv
+*.Rdata
+*.sqlite
