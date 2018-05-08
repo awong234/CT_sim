@@ -41,28 +41,35 @@ regressions = function(taskTable, k, maxtasks){
   
   endTimes = taskTable %>% filter(completed == 1) %>% mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% select(taskID, timeStarted, timeEnded, owner) %>% melt(id.vars = c('taskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value) %>% filter(StartEnd == "timeEnded")
   
+  # Linear formula
   lm1 = lm(formula = Time %>% as.numeric() ~ taskID, data = endTimes)
   
-  newdata = data.frame('taskID' = seq(1, nrow(taskTable) + 1000), 'predDate' = NA)
+  # Predict out new data 1000 tasks into the future
+  newdata = data.frame('taskID' = c(seq(1, nrow(taskTable) + 1000), maxTasks), 'predDate' = NA)
   
+  # Predict linear
   predictedDates = newdata
-  
   predictedDates$Time = predict(lm1, newdata = newdata) %>% as.numeric() %>% as.POSIXct(origin = origin)
   
+  # Fit GAM to existing tasks
   m = gam(formula = Time %>% as.numeric ~ s(taskID, k = k), data = endTimes %>% filter(StartEnd == "timeEnded"))
   
-  newdata = data.frame('taskID' = taskTable$taskID, 'Time' = NA)
-  
+  # Predict GAM to existing tasks
+  hires = seq(1, nrow(taskTable) + 1000)
+  newdata = data.frame('taskID' = hires, 'Time' = NA)
   newdata$Time = predict.gam(object = m, newdata = newdata) %>% as.numeric() %>% as.POSIXct(origin = origin)
+  se = predict.gam(object = m, newdata = data.frame('taskID' = hires), se.fit = T)[[2]] %>% as.numeric()
+  seData = data.frame('taskID' = hires, 'SE' = se)
   
-  se = predict.gam(object = m, newdata = newdata, se.fit = T)[[2]] %>% as.numeric()
-  
-  seData = data.frame('taskID' = taskTable$taskID, 'SE' = se)
-  
-  finalDate = data.frame('taskID' = maxTasks, 'Time' = NA)
+  # Predict GAM to future tasks with low resolution
+  lores = seq(1,maxTasks,length.out = 10000)
+  finalDate = data.frame('taskID' = lores, 'Time' = NA)
   finalDate$Time = predict.gam(object = m, newdata = finalDate) %>% as.numeric() %>% as.POSIXct(origin = origin)
   
-  return(list("lm" = predictedDates, "gam" = newdata, "gamModel" = m, "se" = seData, 'finalDate' = finalDate))
+  se.f = predict.gam(object = m, newdata = data.frame("taskID" = lores), se.fit = T)[[2]] %>% as.numeric()
+  seData.f = data.frame('taskID' = lores, 'SE' = se.f)
+  
+  return(list("lm" = predictedDates, "gam" = newdata, "gamModel" = m, "se" = seData, 'finalDate' = finalDate, 'se.f' = seData.f))
   
 }
 
@@ -231,23 +238,34 @@ server = function(input, output, session){
     startEnd = taskTable_formatted %>% filter(completed == 1 | inProgress == 1) %>% mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% 
       select(taskID, timeStarted, timeEnded, owner) %>% melt(id.vars = c('taskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value)
     
+    minTime = min(startEnd$Time, na.rm = T)
+    maxTime = max(startEnd$Time, na.rm = T)
+    
+    buff = (maxTime - minTime)*0.1
+    
     out = regressions(taskTable = taskTable, k = input$k, maxtasks = maxtasks)
     
     newdata = out$gam
-    
     newdata = newdata %>% mutate(Upper = Time + out$se$SE, Lower = Time - out$se$SE)
+    
+    finalDate = out$finalDate
+    finalDate = finalDate %>% mutate(Upper = Time + out$se.f$SE, Lower = Time - out$se.f$SE)
     
     linear = out$lm
     
     small = plot_ly(data = startEnd) %>% 
       add_markers(x = ~taskID, y = ~Time, color = ~owner) %>% 
-      add_lines(data = newdata %>% filter(taskID %in% startEnd$taskID), x = ~taskID, y = ~Time, name = 'GAM Predict') %>% 
-      add_ribbons(data = newdata %>% filter(taskID %in% startEnd$taskID), x = ~taskID, ymax = ~Upper, ymin = ~Lower, fillcolor = 'rgba(255, 156, 0, 0.2)', line = list(color = 'rgba(255, 156, 0, 0.05'), showlegend = F)
+      add_lines(data = newdata, x = ~taskID, y = ~Time, name = 'GAM Predict') %>% 
+      add_ribbons(data = newdata, x = ~taskID, ymax = ~Upper, ymin = ~Lower, fillcolor = 'rgba(255, 156, 0, 0.2)', line = list(color = 'rgba(255, 156, 0, 0.05'), showlegend = F) %>% 
+      layout(
+        xaxis = list(range = c(1,max(startEnd$taskID) + 0.1*(max(startEnd$taskID)))),
+        yaxis = list(range = c(min(startEnd$Time, na.rm = T) - buff, max(startEnd$Time, na.rm = T) + buff))
+      )
     
     full = plot_ly() %>% 
-      add_lines(data = newdata, x = ~taskID, y = ~Time, name = "GAM Predict (to end)") %>% 
+      add_lines(data = finalDate, x = ~taskID, y = ~Time, name = "GAM Predict (to end)") %>% 
       add_lines(data = linear, x = ~taskID, y = ~Time, name = "LM Predict (to end)") %>% 
-      add_ribbons(data = newdata, x = ~taskID, ymax = ~Upper, ymin = ~Lower, fillcolor = 'rgba(255, 156, 0, 0.2)', line = list(color = 'rgba(255, 156, 0, 0.05'), showlegend = F)
+      add_ribbons(data = finalDate, x = ~taskID, ymax = ~Upper, ymin = ~Lower, fillcolor = 'rgba(255, 156, 0, 0.2)', line = list(color = 'rgba(255, 156, 0, 0.05'), showlegend = F)
     
       
     
@@ -263,13 +281,13 @@ server = function(input, output, session){
     
     predictedDates = out$lm
     
-    newdata = out$gam
+    newdata = out$finalDate
     
-    finalDate = predictedDates[maxTasks,'Time'] %>% as.POSIXct(origin = origin) %>% format("%m/%d/%Y")
+    finalDate = predictedDates[which(predictedDates$taskID == maxTasks),'Time'] %>% as.POSIXct(origin = origin) %>% format("%m/%d/%Y")
     
-    finalDateGAM = newdata[maxTasks,'Time'] %>% as.POSIXct(origin = origin) %>% format("%m/%d/%Y")
+    finalDateGAM = newdata[which(newdata$taskID == maxTasks),'Time'] %>% as.POSIXct(origin = origin) %>% format("%m/%d/%Y")
     
-    paste0("Date of completion anticipated to be: <br> LM =   <b>", finalDate, "</b>. Ordinary linear regression on end times predicting end time of task number ", maxTasks, "<br>GAM = <b>", finalDateGAM, "</b>. GAM is a generalized additive model regression on end time using a spline smoothing function with ", input$k, " degrees of freedom")
+    paste0("Date of completion anticipated to be: <br> LM =   <b>", finalDate, "</b>. Ordinary linear regression on end times predicting end time of task number ", maxTasks %>% format(big.mark = ','), "<br>GAM = <b>", finalDateGAM, "</b>. GAM is a generalized additive model regression on end time using a spline smoothing function with ", input$k, " degrees of freedom")
     
     
   })
