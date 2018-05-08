@@ -33,7 +33,7 @@ printDBsafe = function(con, name){ # perform a simple read on the server databas
   return(taskList)
 }
 
-regressions = function(taskTable, k, maxtasks){
+regressions = function(taskTable, k, maxTasks){
   
   taskTable = taskTable %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
                                    timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA)
@@ -243,7 +243,7 @@ server = function(input, output, session){
     
     buff = (maxTime - minTime)*0.1
     
-    out = regressions(taskTable = taskTable, k = input$k, maxtasks = maxtasks)
+    out = regressions(taskTable = taskTable, k = input$k, maxTasks = maxTasks)
     
     newdata = out$gam
     newdata = newdata %>% mutate(Upper = Time + out$se$SE, Lower = Time - out$se$SE)
