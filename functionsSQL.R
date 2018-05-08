@@ -36,9 +36,9 @@ reserveTasks = function(numTasks = NULL){
     test = tryCatch(expr = {dbGetQuery(con, 
                                        statement = statement)},
                     error = function(e){
-                      message(e)
+                      # message(e)
                       # Wait a few seconds to retry...
-                      Sys.sleep(2)
+                      Sys.sleep(rpois(n = 1, lambda = 5))
                     }
     )
   }
@@ -70,9 +70,9 @@ reserveTasks = function(numTasks = NULL){
     test = tryCatch(
       expr = {reservedTasks = dbGetQuery(con, statement = paste0("SELECT * FROM tasklistntres WHERE inProgress = 1 AND owner = ", "\'", Sys.info()['nodename'], "\'"))[,1]},
       error = function(e){
-        message(e)
+        # message(e)
         # Wait a few seconds to retry...
-        Sys.sleep(2)
+        Sys.sleep(rpois(n = 1, lambda = 5))
       }
     )
   }
