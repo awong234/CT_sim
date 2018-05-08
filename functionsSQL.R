@@ -104,7 +104,18 @@ updateTaskCompleted = function(reservedTasks = NULL){
   
   statement = paste0("UPDATE tasklistntres SET inProgress = 0, completed = 1, timeEnded = ", as.integer(Sys.time()), " WHERE taskID IN (", toString(reservedTasks), ");")
 
-  executeWithRestart(SQL_statement = statement, con = con)
+  test = NULL
+  
+  while(is.null(test)){
+    
+    test = tryCatch(expr = {dbExecute(conn = con, statement = statement)},
+                    error = function(e){
+                      # message(e)
+                      Sys.sleep(rpois(n = 1, lambda = 5))
+                    }
+    )
+  }
+  return(test)
   
   # # # # Shut down connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
@@ -130,7 +141,11 @@ testSQL = function(reservedTasks = integer(0)){
   # In parallel, reserve and 'analyze' tasks, updating completed tasks
   # concurrently.
   
-  registerDoParallel(cores = detectCores()-1) # Leave one free core.
+  cores = detectCores() - 1
+  
+  registerDoParallel(cores = cores) # Leave one free core.
+  
+  reservedTasks = reserveTasks(numTasks = cores)
   
   while(length(reservedTasks) > 0){
     
@@ -210,8 +225,8 @@ executeWithRestart = function(SQL_statement, con){
   
       test = tryCatch(expr = {dbExecute(conn = con, statement = SQL_statement)},
                     error = function(e){
-                      message(e)
-                      Sys.sleep(2)
+                      # message(e)
+                      Sys.sleep(rpois(n = 1, lambda = 5))
                     }
     )
   }
