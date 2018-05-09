@@ -277,7 +277,7 @@ server = function(input, output, session){
   
   output$timeEstimate = renderText(expr = {
 
-    out = regressions(taskTable = taskTable, k = input$k)
+    out = regressions(taskTable = taskTable, k = input$k, maxTasks = maxTasks)
     
     predictedDates = out$lm
     
