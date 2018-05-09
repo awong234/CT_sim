@@ -194,6 +194,7 @@ runFunc = function(task){
       y=apply(data[['y.scr']],c(1,2),sum)
       n=data[['n']]
       N = data[['N']]
+      if(N < 10){stop("Insufficient population size (N < 10) for estimation.")}
       buff = data[['buff']]
       K = data[['K']]
       parm=c(log(thinRate2),log(sigma),log(N-nrow(y)+1))
