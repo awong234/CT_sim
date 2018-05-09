@@ -190,7 +190,7 @@ runFunc = function(task){
     # SCR analysis
     
     scrAnalysis = function(data){
-      browser()
+      
       scaps = data[['sumscaps']]
       if(scaps < 3){stop("Insufficient recaptures (scaps < 3) for estimation.")}
       y=apply(data[['y.scr']],c(1,2),sum)
