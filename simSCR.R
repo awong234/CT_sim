@@ -190,9 +190,12 @@ runFunc = function(task){
     # SCR analysis
     
     scrAnalysis = function(data){
-      
+      browser()
+      scaps = data[['sumscaps']]
+      if(scaps < 3){stop("Insufficient recaptures (scaps < 3) for estimation.")}
       y=apply(data[['y.scr']],c(1,2),sum)
       n=data[['n']]
+      if(n < 3){stop("Insufficient captures (n < 3) for estimation.")}
       N = data[['N']]
       if(N < 10){stop("Insufficient population size (N < 10) for estimation.")}
       buff = data[['buff']]
