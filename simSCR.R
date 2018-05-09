@@ -120,11 +120,11 @@ simSCR<- function(D = 0.83333,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 
        idx=order(caps,decreasing=TRUE)
        y = y[idx,,] 
        s=s[idx,]
+       y=y[rowSums(y)>0,,]
      }else{
        y = y
      }
      n=sum(caps>0)
-     y=y[rowSums(y)>0,,]
      #Count spatial recaps
      y2D=apply(y,c(1,2),sum)
      scaps=rowSums(1*(y2D>0))
@@ -196,7 +196,7 @@ runFunc = function(task){
       N = data[['N']]
       buff = data[['buff']]
       K = data[['K']]
-      parm=c(log(thinRate2),log(sigma),log(N-nrow(y)))
+      parm=c(log(thinRate2),log(sigma),log(N-nrow(y)+1))
       delta=0.25 #state space spacing
       #make state space
       Xl <- min(X[, 1]) - buff
