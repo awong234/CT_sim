@@ -15,9 +15,9 @@ for(i in 1:2){
 
 reserveTasks = function(numTasks = NULL){
   
-  if (!file.exists("reservedTasks.csv")) {
-    file.create("reservedTasks.csv")
-  }
+  # if (!file.exists("reservedTasks.csv")) {
+  #   file.create("reservedTasks.csv")
+  # }
   
   # Open database connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
@@ -82,7 +82,7 @@ reserveTasks = function(numTasks = NULL){
   # # # # Shut down connection # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
   # Append local record of tasks reserved
-  write.table(x = reservedTasks, file = 'reservedTasks.csv', row.names = F, append = T, sep = ',', col.names = F)
+  # write.table(x = reservedTasks, file = 'reservedTasks.csv', row.names = F, append = T, sep = ',', col.names = F)
   
   return(reservedTasks)
   
