@@ -21,7 +21,7 @@ printDBsafe = function(con, name){ # perform a simple read on the server databas
     
     test = tryCatch(expr = {taskList = dbReadTable(conn = con, name = name)},
                     error = function(e){
-                      message(e)
+                      # message(e)
                       Sys.sleep(5)
                     }
     )
@@ -206,34 +206,19 @@ server = function(input, output, session){
     
     taskTable = formatTable()
     
-    text1 = paste0("<h3>",sum(taskTable$completed), " of ", maxTasks, " tasks completed.</h3>")
+    text1 = paste0("<h3>",sum(taskTable$completed) %>% format(big.mark = ','), " of ", maxTasks %>% format(big.mark = ','), " tasks completed.</h3>")
     text2 = paste0("<h4>", round(100*sum(taskTable$completed) / maxTasks, 2), "% complete.</h4>")
     
     HTML(paste(text1, text2, sep = "<br/>"))
     
   })
-  
-  # output$timeChart = renderPlot(expr = {
-  #   
-  #   taskTable = taskTable %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
-  #                                                                          timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA), 
-  #                                                                          Duration = ifelse(timeStarted > 0 & timeEnded > 0, (timeEnded - timeStarted)/60, 0))
-  #   
-  #   startEnd = taskTable %>% filter(completed == 1 | inProgress == 1) %>% mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% 
-  #     select(taskID, timeStarted, timeEnded, owner) %>% melt(id.vars = c('taskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value)
-  #   
-  #   ggplot() + 
-  #     geom_point(data = startEnd, aes(x = factor(taskID), y = Time, group = taskID, color = owner)) + 
-  #     geom_line(data = startEnd, aes(x = factor(taskID), y = Time, group = taskID, color = owner), size = nrow(startEnd)/20) +
-  #     theme_bw() + xlab("Task ID") + 
-  #     geom_smooth(data = startEnd %>% filter(StartEnd == "timeEnded"), aes(x = (taskID), y = Time), method = "lm", color = 'black', linetype = 'dotted')
-  # })
-  
+ 
   output$timeChart2 = renderPlotly(expr = {
     
-    taskTable_formatted = taskTable %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
+    taskTable_formatted = taskTable %>% arrange(timeEnded) %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
                                      timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA), 
-                                     Duration = ifelse(timeStarted > 0 & timeEnded > 0, (timeEnded - timeStarted)/60, 0))
+                                     Duration = ifelse(timeStarted > 0 & timeEnded > 0, (timeEnded - timeStarted)/60, 0),
+                                     newTaskID = 1:nrow(.))
     
     startEnd = taskTable_formatted %>% filter(completed == 1 | inProgress == 1) %>% mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% 
       select(taskID, timeStarted, timeEnded, owner) %>% melt(id.vars = c('taskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value)
