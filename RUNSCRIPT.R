@@ -1,3 +1,12 @@
+setWDHere = function(){
+  sourcePath<-rstudioapi::getSourceEditorContext()$path[1]  # gets the location of the script that this piece of code is in
+  sourceLoc<-strsplit(sourcePath, "/RUNSCRIPT")[[1]][1] # get the parent folder
+  setwd(sourceLoc) # set the wd to the parent folder
+}
+
+setWDHere()
+
+
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
@@ -27,14 +36,6 @@ source('functionsSQL.R')
   # Analyze data under SCR
   # Analyze data under OCC
   # Export analysis elements
-
-setWDHere = function(){
-  sourcePath<-rstudioapi::getSourceEditorContext()$path[1]  # gets the location of the script that this piece of code is in
-  sourceLoc<-strsplit(sourcePath, "/RUNSCRIPT")[[1]][1] # get the parent folder
-  setwd(sourceLoc) # set the wd to the parent folder
-}
-
-setWDHere()
 
 # Preparation block ------------------------------------------------------------------------------------------------------------------------------
 
