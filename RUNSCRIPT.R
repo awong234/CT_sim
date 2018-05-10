@@ -103,7 +103,7 @@ while(length(reservedTasks) > 0){
   
   conLocal = dbConnect(SQLite(), 'settings.sqlite')
   
-  settingsLocal = dbGetQuery(conn = conLocal, statement = paste0('SELECT * FROM settings WHERE taskID IN (', toString(reservedTasks), ")"))
+  settingsTable = dbGetQuery(conn = conLocal, statement = paste0('SELECT * FROM settings WHERE taskID IN (', toString(reservedTasks), ")"))
   
   dbDisconnect(conLocal)
     
