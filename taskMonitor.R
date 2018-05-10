@@ -33,41 +33,43 @@ printDBsafe = function(con, name){ # perform a simple read on the server databas
   return(taskList)
 }
 
-regressions = function(taskTable, k, maxTasks){
+regressions = function(taskTable, k, maxTasks, dataFrac){
   
-  taskTable = taskTable %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
+  taskTableFull = taskTable %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
                                    timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA)
   )
   
-  endTimes = taskTable %>% filter(completed == 1) %>% mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% select(taskID, timeStarted, timeEnded, owner) %>% melt(id.vars = c('taskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value) %>% filter(StartEnd == "timeEnded")
+  taskTableShort = taskTableFull %>% filter(complete.cases(.)) %>% sample_frac(size = dataFrac, weight = timeEnded %>% as.numeric)
+  
+  endTimes = taskTableShort %>% filter(completed == 1) %>% mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% select(newTaskID, timeStarted, timeEnded, owner) %>% melt(id.vars = c('newTaskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value) %>% filter(StartEnd == "timeEnded")
   
   # Linear formula
-  lm1 = lm(formula = Time %>% as.numeric() ~ taskID, data = endTimes)
+  lm1 = lm(formula = Time %>% as.numeric() ~ newTaskID, data = endTimes)
   
   # Predict out new data 1000 tasks into the future
-  newdata = data.frame('taskID' = c(seq(1, nrow(taskTable) + 1000), maxTasks), 'predDate' = NA)
+  newdata = data.frame('newTaskID' = c(seq(1, nrow(taskTableFull) + 1000), maxTasks), 'predDate' = NA)
   
   # Predict linear
   predictedDates = newdata
   predictedDates$Time = predict(lm1, newdata = newdata) %>% as.numeric() %>% as.POSIXct(origin = origin)
   
   # Fit GAM to existing tasks
-  m = gam(formula = Time %>% as.numeric ~ s(taskID, k = k), data = endTimes %>% filter(StartEnd == "timeEnded"))
+  m = gam(formula = Time %>% as.numeric ~ s(newTaskID, k = k), data = endTimes %>% filter(StartEnd == "timeEnded"))
   
   # Predict GAM to existing tasks
-  hires = seq(1, nrow(taskTable) + 1000)
-  newdata = data.frame('taskID' = hires, 'Time' = NA)
+  hires = seq(1, nrow(taskTableFull) + 1000)
+  newdata = data.frame('newTaskID' = hires, 'Time' = NA)
   newdata$Time = predict.gam(object = m, newdata = newdata) %>% as.numeric() %>% as.POSIXct(origin = origin)
-  se = predict.gam(object = m, newdata = data.frame('taskID' = hires), se.fit = T)[[2]] %>% as.numeric()
-  seData = data.frame('taskID' = hires, 'SE' = se)
+  se = predict.gam(object = m, newdata = data.frame('newTaskID' = hires), se.fit = T)[[2]] %>% as.numeric()
+  seData = data.frame('newTaskID' = hires, 'SE' = se)
   
   # Predict GAM to future tasks with low resolution
   lores = seq(1,maxTasks,length.out = 10000)
-  finalDate = data.frame('taskID' = lores, 'Time' = NA)
+  finalDate = data.frame('newTaskID' = lores, 'Time' = NA)
   finalDate$Time = predict.gam(object = m, newdata = finalDate) %>% as.numeric() %>% as.POSIXct(origin = origin)
   
-  se.f = predict.gam(object = m, newdata = data.frame("taskID" = lores), se.fit = T)[[2]] %>% as.numeric()
-  seData.f = data.frame('taskID' = lores, 'SE' = se.f)
+  se.f = predict.gam(object = m, newdata = data.frame("newTaskID" = lores), se.fit = T)[[2]] %>% as.numeric()
+  seData.f = data.frame('newTaskID' = lores, 'SE' = se.f)
   
   return(list("lm" = predictedDates, "gam" = newdata, "gamModel" = m, "se" = seData, 'finalDate' = finalDate, 'se.f' = seData.f))
   
@@ -112,10 +114,29 @@ ui = fluidPage(
                        fluidRow(
                          column(12
                                 ,h4("Chart of Task Completion")
+                         ),
+                         column(3
                                 ,sliderInput("k", label = "Select smooth parameter", min = 2, max = 10, value = 2, step = 1)
+                         ),
+                         column(3
+                                ,shiny::numericInput('days', label = 'Show how many days before now? Default is 1.', min = 1, max = 10, step = 1, value = 1)
+                         ),
+                         column(3
+                                ,shiny::sliderInput('frac', label = 'Select fraction of data to view (for efficiency)', min = 0.01, max = 1, value = 0.1, step = 0.01)
+                         ),
+                         column(3
+                                ,shiny::sliderInput('fracRegression', label = "Fraction of data to perform regression upon (weighted by date)?", 
+                                                    min = 0.01, max = 1, value = 0.1, step = 0.01)
+                         )
+                         
+                       )
+                       ,fluidRow(
+                         column(12
                                 # ,plotOutput("timeChart", height = '500px'
                                 ,plotlyOutput("timeChart2", height = '500px')
-                                ))
+                                )
+                       )
+                       
                        ,fluidRow(
                          column(12
                                  ,h4("Estimate of remaining time")
@@ -215,20 +236,23 @@ server = function(input, output, session){
  
   output$timeChart2 = renderPlotly(expr = {
     
-    taskTable_formatted = taskTable %>% arrange(timeEnded) %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
+    taskTable_formatted = taskTable %>% arrange(timeStarted,timeEnded) %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
                                      timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA), 
                                      Duration = ifelse(timeStarted > 0 & timeEnded > 0, (timeEnded - timeStarted)/60, 0),
                                      newTaskID = 1:nrow(.))
     
-    startEnd = taskTable_formatted %>% filter(completed == 1 | inProgress == 1) %>% mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% 
-      select(taskID, timeStarted, timeEnded, owner) %>% melt(id.vars = c('taskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value)
+    startEnd = taskTable_formatted %>% filter(completed == 1 | inProgress == 1, complete.cases(.)) %>% 
+      sample_frac(size = input$frac, weight = timeEnded %>% as.numeric()) %>% arrange(timeStarted, timeEnded) %>% 
+      mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% 
+      select(newTaskID, timeStarted, timeEnded, owner)  %>% melt(id.vars = c('newTaskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value) %>% 
+      filter((Sys.time() - Time) < input$days*24*60*60)
     
     minTime = min(startEnd$Time, na.rm = T)
     maxTime = max(startEnd$Time, na.rm = T)
     
     buff = (maxTime - minTime)*0.1
     
-    out = regressions(taskTable = taskTable, k = input$k, maxTasks = maxTasks)
+    out = regressions(taskTable = taskTable_formatted, k = input$k, maxTasks = maxTasks, dataFrac = input$fracRegression)
     
     newdata = out$gam
     newdata = newdata %>% mutate(Upper = Time + out$se$SE, Lower = Time - out$se$SE)
@@ -239,18 +263,18 @@ server = function(input, output, session){
     linear = out$lm
     
     small = plot_ly(data = startEnd) %>% 
-      add_markers(x = ~taskID, y = ~Time, color = ~owner) %>% 
-      add_lines(data = newdata, x = ~taskID, y = ~Time, name = 'GAM Predict') %>% 
-      add_ribbons(data = newdata, x = ~taskID, ymax = ~Upper, ymin = ~Lower, fillcolor = 'rgba(255, 156, 0, 0.2)', line = list(color = 'rgba(255, 156, 0, 0.05'), showlegend = F) %>% 
+      add_markers(x = ~newTaskID, y = ~Time, color = ~owner) %>% 
+      add_lines(data = newdata, x = ~newTaskID, y = ~Time, name = 'GAM Predict') %>% 
+      add_ribbons(data = newdata, x = ~newTaskID, ymax = ~Upper, ymin = ~Lower, fillcolor = 'rgba(255, 156, 0, 0.2)', line = list(color = 'rgba(255, 156, 0, 0.05'), showlegend = F) %>% 
       layout(
-        xaxis = list(range = c(1,max(startEnd$taskID) + 0.1*(max(startEnd$taskID)))),
+        xaxis = list(range = c(1,max(startEnd$newTaskID) + 0.1*(max(startEnd$newTaskID)))),
         yaxis = list(range = c(min(startEnd$Time, na.rm = T) - buff, max(startEnd$Time, na.rm = T) + buff))
       )
     
     full = plot_ly() %>% 
-      add_lines(data = finalDate, x = ~taskID, y = ~Time, name = "GAM Predict (to end)") %>% 
-      add_lines(data = linear, x = ~taskID, y = ~Time, name = "LM Predict (to end)") %>% 
-      add_ribbons(data = finalDate, x = ~taskID, ymax = ~Upper, ymin = ~Lower, fillcolor = 'rgba(255, 156, 0, 0.2)', line = list(color = 'rgba(255, 156, 0, 0.05'), showlegend = F)
+      add_lines(data = finalDate, x = ~newTaskID, y = ~Time, name = "GAM Predict (to end)") %>% 
+      add_lines(data = linear, x = ~newTaskID, y = ~Time, name = "LM Predict (to end)") %>% 
+      add_ribbons(data = finalDate, x = ~newTaskID, ymax = ~Upper, ymin = ~Lower, fillcolor = 'rgba(255, 156, 0, 0.2)', line = list(color = 'rgba(255, 156, 0, 0.05'), showlegend = F)
     
       
     
@@ -262,15 +286,15 @@ server = function(input, output, session){
   
   output$timeEstimate = renderText(expr = {
 
-    out = regressions(taskTable = taskTable, k = input$k, maxTasks = maxTasks)
+    out = regressions(taskTable = taskTable_formatted, k = input$k, maxTasks = maxTasks, dataFrac = input$fracRegression)
     
     predictedDates = out$lm
     
     newdata = out$finalDate
     
-    finalDate = predictedDates[which(predictedDates$taskID == maxTasks),'Time'] %>% as.POSIXct(origin = origin) %>% format("%m/%d/%Y")
+    finalDate = predictedDates[which(predictedDates$newTaskID == maxTasks),'Time'] %>% as.POSIXct(origin = origin) %>% format("%m/%d/%Y")
     
-    finalDateGAM = newdata[which(newdata$taskID == maxTasks),'Time'] %>% as.POSIXct(origin = origin) %>% format("%m/%d/%Y")
+    finalDateGAM = newdata[which(newdata$newTaskID == maxTasks),'Time'] %>% as.POSIXct(origin = origin) %>% format("%m/%d/%Y")
     
     paste0("Date of completion anticipated to be: <br> LM =   <b>", finalDate, "</b>. Ordinary linear regression on end times predicting end time of task number ", maxTasks %>% format(big.mark = ','), "<br>GAM = <b>", finalDateGAM, "</b>. GAM is a generalized additive model regression on end time using a spline smoothing function with ", input$k, " degrees of freedom")
     
