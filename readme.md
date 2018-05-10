@@ -28,13 +28,17 @@ You will need to install Rtools and then run some commands that are already in t
 
 Go get Rtools from the [link here](https://cran.r-project.org/bin/windows/Rtools/Rtools34.exe). This link will go get the installer immediately. Run the installer as you would any other installer.
 
-Then, run the preparation block in the script (this is labeled). 
+Then, run the SETUP.R script (a new file). 
+
+#### SETUP.R
+
+This file builds the local SQL database to draw particular settings from. Run the whole script, and you will know that it has been successful if a file `settings.sqlite` of size 3GB shows up in your working directory. 
 
 #### Preparation block
 
-Once you have installed SPIM, **particularly on your first run** run each line of the preparation block one at a time. Each package will be installed if you don't have it, or loaded if you do. Make note of any errors. 
+Once you have installed SPIM and run the SETUP.R file, **particularly on your first run** run each line of the preparation block one at a time. Each package will be installed if you don't have it, or loaded if you do. Make note of any errors. 
 
-When you get to the `source(functionsSQL.R)` line, the program *should* ask you to register your netID or initials - please follow the prompts! If you notice a mistake in your username, please adjust it by running 
+**Please** run `source(functionsSQL.R)` at the top, the program should ask you to register your netID or initials - just use one username for all your computers please! If you notice a mistake in your username, please adjust it by running 
 
 ```
 registerUser(update = T)
@@ -44,7 +48,7 @@ registerUser(update = T)
 
 Once you've installed the SPIM package and all the other requisite packages, you will need **only** to execute the contents in `RUNSCRIPT.R`. 
 
-To do so, open the file in R and just hit the source button up top. You can also run the document interactively, but I'd prefer you source it the first few times.
+To do so, open the file in R and just hit the source button up top. You can also run the document interactively, but I'd prefer you source it, so that there are no mistakes selecting lines.
 
 ![](https://github.com/awong234/CT_sim/blob/master/assets/sourceButton.png)
 
@@ -62,7 +66,7 @@ Set `cores = detectCores()` for maximum performance. Set `cores = 1` for minimum
 
 #### Number of tasks to complete per cycle
 
-By default, `numTasks = cores`, so you're doing one task per core that you have. If you want to work your computer harder, you can set `numTasks = 2*cores`, or something greater than the amount of cores that you have reserved, so that there are more tasks going on at once. 
+By default, `numTasks = cores`, so you're doing one task per core that you have. 
 
 #### autoUpload
 
@@ -112,6 +116,15 @@ When you go to upload **new** files, be sure to follow the next steps! Select al
 * If you select "Update Existing", it will re-upload all of the files you have already uploaded, which will become tedious with greater amounts of files, but not harmful. 
 
 Be sure to upload your outputs frequently so that we have them all in case of system failure.
+
+#### Freeing space
+
+If you have an external hard drive and don't want to use your main hard drive space, please operate in the following order:
+
+1. Stop the analysis on the computer whose space you want to free up. **This is especially important so that there are no outputs being created between steps 2 and 3 that will not be uploaded!**
+1. Upload the outputs to the shard drive.
+1. Move the output files to the external drive.
+1. Restart the analysis.
 
 # Files contained
 
@@ -163,29 +176,13 @@ Functions contained to execute SQL transactions to update tasks to be completed.
 
 C++ implementation of SCR likelihood calculation
 
-### nullSCR testscript.R
-
-TEMPORARY
-
-Test for application of analytical tools to multiple simulated sampling scenarios.
-
 ### RUNSCRIPT.R
 
 This will be the script that users will ultimately execute to participate in the analyses. It has major components that are outlined at the start of the script.
 
-### SCRdesignSIM.R
+### SETUP.R
 
-This file is the original script provided by Andy trialing the basic idea for the simulation.
-
-### simOcc.R
-
-Simulates some occupancy data under parameters:
-
-* `p`     : detection probability.
-* `psi`   : occupancy probability.
-* `J`     : Number of sites.
-* `K`     : Number of occasions.
-* `seed`  : Seed for replication.
+This file writes a local SQL database of the tasks to be done. Please run this on your first initialization of the analysis.
 
 ### simSCR.R
 
@@ -209,12 +206,12 @@ This page displays the start/end times of each task graphically, and a linear tr
 
 ### uploadOutput.R
 
-TEST file : demonstrates ability to upload files to remote directory. My opinion is that it doesn't confer much convenience compared to drag/drop to the folder. Maybe scheduling this to run once a night is ok, but only as a backup service.
-
-tidyverse's `googledrive` package only services your OWN google drive, so MUST have directory already in your account.
-
-The function will write a few test .csv files to your directory.
+tidyverse's `googledrive` package only services your OWN google drive, so MUST have directory already in your account. This function will upload files in the `localOutput/` directory to the shared drive.
 
 ### writeSettings.R
 
 This file, when sourced, will write a record of all the proposed settings to memory. This is used in `RUNSCRIPT.R`
+
+### settings.sqlite
+
+After you have run `SETUP.R`, this file will generate in your working directory. It contains all 32 million tasks to be completed.
