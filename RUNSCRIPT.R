@@ -67,8 +67,9 @@ source('simSCR.R')
 
 cores = detectCores() - 1 
 
+
 # How many tasks to do at once?
-numTasks = cores
+numTasks = cores^2
 
 registerDoParallel(cores = cores) 
 
@@ -108,3 +109,4 @@ while(length(reservedTasks) > 0){
   if(autoUpload){uploadFiles(filePaths = paste0('localOutput/',files), drivePath = drivePath, par = F)}
   
 }
+
