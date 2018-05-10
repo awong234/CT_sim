@@ -286,7 +286,11 @@ server = function(input, output, session){
   
   output$timeEstimate = renderText(expr = {
 
-    out = regressions(taskTable = taskTable_formatted, k = input$k, maxTasks = maxTasks, dataFrac = input$fracRegression)
+    out = regressions(taskTable = taskTable %>% arrange(timeStarted,timeEnded) %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
+                                                                                          timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA), 
+                                                                                          Duration = ifelse(timeStarted > 0 & timeEnded > 0, (timeEnded - timeStarted)/60, 0),
+                                                                                          newTaskID = 1:nrow(.)), 
+                      k = input$k, maxTasks = maxTasks, dataFrac = input$fracRegression)
     
     predictedDates = out$lm
     
