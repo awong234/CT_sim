@@ -275,7 +275,7 @@ runFunc = function(task, settingsTable){
     save(out, file = paste0("localOutput/out_task_", task, ".Rdata"))
     
     # Note completion on server
-    updateTaskCompleted(reservedTasks = task)
+    # updateTaskCompleted(reservedTasks = task)
     
     return(paste("Task", task, "now complete and saved to file"))
         
