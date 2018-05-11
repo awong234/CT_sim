@@ -68,7 +68,6 @@ source('simSCR.R')
 
 cores = detectCores() - 1 
 
-
 # How many tasks to do at once?
 numTasks = cores^2
 
@@ -90,6 +89,12 @@ files = dir(path = 'localOutput/', pattern = ".Rdata")
 drivePath = 'CT_sim_outputs/'
 
 # Analysis loop ----------------------------------------------------------------------------------------------------
+
+# Start subroutine for updating completion of tasks.
+
+system(command = 'subroutine.bat', wait = F, invisible = F)
+
+rnorm(1,1,1)
 
 # Reserve some tasks to be completed. Take as many tasks as you have cores.
 
