@@ -23,7 +23,7 @@ reserveTasks = function(numTasks = NULL){
   
   con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql6.gear.host;Database=tasklistntres;Uid=tasklistntres;Pwd=Gy435_eN5-Ry;")
   
-  2# # # # Check to see if tasks taken by computer are not done yet - in event of unexpected shutdowns. # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  # # # # Check to see if tasks taken by computer are not done yet - in event of unexpected shutdowns. # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
   # Is your computer 'working on' an event at the time of this check? If so, it never finished from the previous startup.
   
@@ -127,7 +127,7 @@ printDB = function(){ # perform a simple read on the server database
   
   con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql6.gear.host;Database=tasklistntres;Uid=tasklistntres;Pwd=Gy435_eN5-Ry;")
   
-  taskList = dbGetQuery(conn = con, statement = "SELECT TOP 100 * FROM tasklistntres ORDER BY taskID")
+  taskList = dbGetQuery(conn = con, statement = "SELECT TOP 100 * FROM tasklistntres ORDER BY timeStarted DESC")
   
   dbDisconnect(con)
   
