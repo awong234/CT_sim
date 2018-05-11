@@ -20,10 +20,10 @@ subrt_updateComplete = function(){
     
     out = dbGetQuery(conn = con, statement = statement)
     
-    tasksToComplete = done[!done %in% out]
+    tasksToComplete = done[done %in% out]
     
     # Mark completed
-    if(length(tasksToComplete > 0)) # updateTaskCompleted(reservedTasks = tasksToComplete)
+    if(length(tasksToComplete > 0)) updateTaskCompleted(reservedTasks = tasksToComplete)
     
     print(paste0("Updated ", length(tasksToComplete), " tasks."))
     
