@@ -31,7 +31,7 @@ subrt_updateComplete = function(){
     
     message("DON'T CLOSE ME, I AM MONITORING TASKS AND UPDATING THEIR STATUS EVERY 10 MINUTES")
     
-    Sys.sleep(1*60)
+    Sys.sleep(10*60)
     
   }
 
