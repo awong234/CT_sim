@@ -136,10 +136,11 @@ simSCR<- function(D = 0.83333,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 
    #estimate occupancy p
    sites.used=sum(apply(y.use,2,sum)>0)#sites use at least once
    p.bar=sum(y.occ)/(sites.used*K) #estimated occupancy p
-   out<-list(y.use=y.use,y.det=y.det,y.occ=y.occ,y.scr=y,s=s,X=X, K=K,n=n,nscap=nscap,sumscap=sumscap,buff=buff,
+   out<-list(K=K,n=n,nscap=nscap,sumscap=sumscap,buff=buff,
              psi.bar = mean(psi.grid),p.bar=p.bar,
              N = N, # may as well return this too
              seed = seed
+             # y.use=y.use,y.det=y.det,y.occ=y.occ,y.scr=y,s=s,X=X, 
              )
    return(out)
  }
