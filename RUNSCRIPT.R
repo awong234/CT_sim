@@ -1,3 +1,12 @@
+setWDHere = function(){
+  sourcePath<-rstudioapi::getSourceEditorContext()$path[1]  # gets the location of the script that this piece of code is in
+  sourceLoc<-strsplit(sourcePath, "/RUNSCRIPT")[[1]][1] # get the parent folder
+  setwd(sourceLoc) # set the wd to the parent folder
+}
+
+setWDHere()
+
+
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
@@ -27,14 +36,6 @@ source('functionsSQL.R')
   # Analyze data under SCR
   # Analyze data under OCC
   # Export analysis elements
-
-setWDHere = function(){
-  sourcePath<-rstudioapi::getSourceEditorContext()$path[1]  # gets the location of the script that this piece of code is in
-  sourceLoc<-strsplit(sourcePath, "/RUNSCRIPT")[[1]][1] # get the parent folder
-  setwd(sourceLoc) # set the wd to the parent folder
-}
-
-setWDHere()
 
 # Preparation block ------------------------------------------------------------------------------------------------------------------------------
 
@@ -100,8 +101,14 @@ reservedTasks = reserveTasks(numTasks = numTasks)
 # reservedTasks = c(1,1001,2001,3001,4001)
 
 while(length(reservedTasks) > 0){
+  
+  conLocal = dbConnect(SQLite(), 'settings.sqlite')
+  
+  settingsTable = dbGetQuery(conn = conLocal, statement = paste0('SELECT * FROM settings WHERE taskID IN (', toString(reservedTasks), ")"))
+  
+  dbDisconnect(conLocal)
     
-  foreach(task = reservedTasks, .packages = c("Rcpp", "RSQLite", "DBI","SPIM")) %dopar% {runFunc(task)}
+  foreach(task = reservedTasks, .packages = c("Rcpp", "RSQLite", "DBI","SPIM")) %dopar% {runFunc(task, settingsTable)}
   
   # Reserve some more tasks 
   reservedTasks = reserveTasks(numTasks = numTasks)
