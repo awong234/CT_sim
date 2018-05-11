@@ -2,7 +2,7 @@ source('functionsSQL.R')
 
 subrt_updateComplete = function(){
 
-  print("DON'T CLOSE ME, I AM MONITORING TASKS AND UPDATING THEIR STATUS EVERY 10 MINUTES")
+  message("DON'T CLOSE ME, I AM MONITORING TASKS AND UPDATING THEIR STATUS EVERY 10 MINUTES")
     
   repeat{
     
@@ -20,7 +20,9 @@ subrt_updateComplete = function(){
     
     out = dbGetQuery(conn = con, statement = statement)
     
-    tasksToUpdate = done[done %in% out]
+    dbDisconnect(conn = con)
+    
+    tasksToUpdate = done[done %in% out$taskID]
     
     # Mark completed
     if(length(tasksToUpdate > 0)){updateTaskCompleted(reservedTasks = tasksToUpdate)}
@@ -29,7 +31,7 @@ subrt_updateComplete = function(){
     
     message("DON'T CLOSE ME, I AM MONITORING TASKS AND UPDATING THEIR STATUS EVERY 10 MINUTES")
     
-    Sys.sleep(10*60)
+    Sys.sleep(1*60)
     
   }
 
