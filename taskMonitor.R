@@ -119,7 +119,7 @@ ui = fluidPage(
                                 ,sliderInput("k", label = "Select smooth parameter", min = 2, max = 10, value = 2, step = 1)
                          ),
                          column(3
-                                ,shiny::numericInput('days', label = 'Show how many days before now? Default is 1.', min = 1, max = 10, step = 1, value = 1)
+                                ,shiny::numericInput('hours', label = 'Show how many hours before now? Default is 5.', min = 1, max = 5*24, step = 5, value = 5)
                          ),
                          column(3
                                 ,shiny::sliderInput('frac', label = 'Select fraction of data to view (for efficiency)', min = 0.01, max = 1, value = 0.1, step = 0.01)
@@ -245,7 +245,7 @@ server = function(input, output, session){
       sample_frac(size = input$frac, weight = timeEnded %>% as.numeric()) %>% arrange(timeStarted, timeEnded) %>% 
       mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% 
       select(newTaskID, timeStarted, timeEnded, owner)  %>% melt(id.vars = c('newTaskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value) %>% 
-      filter((Sys.time() - Time) < input$days*24*60*60)
+      filter((Sys.time() - Time %>% as.numeric()) < input$hours*60*60)
     
     minTime = min(startEnd$Time, na.rm = T)
     maxTime = max(startEnd$Time, na.rm = T)
