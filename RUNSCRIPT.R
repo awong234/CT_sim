@@ -90,11 +90,9 @@ drivePath = 'CT_sim_outputs/'
 
 # Analysis loop ----------------------------------------------------------------------------------------------------
 
-# Start subroutine for updating completion of tasks.
+# Start subroutine for updating completion of tasks. Don't close this window please.
 
 system(command = 'subroutine.bat', wait = F, invisible = F)
-
-rnorm(1,1,1)
 
 # Reserve some tasks to be completed. Take as many tasks as you have cores.
 
