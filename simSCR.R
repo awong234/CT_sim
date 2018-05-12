@@ -139,8 +139,8 @@ simSCR<- function(D = 0.83333,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 
    out<-list(K=K,n=n,nscap=nscap,sumscap=sumscap,buff=buff,
              psi.bar = mean(psi.grid),p.bar=p.bar,
              N = N, # may as well return this too
-             seed = seed
-             # y.use=y.use,y.det=y.det,y.occ=y.occ,y.scr=y,s=s,X=X, 
+             seed = seed,
+             y.use=y.use,y.det=y.det,y.occ=y.occ,y.scr=y,s=s,X=X, 
              )
    return(out)
  }
@@ -270,7 +270,9 @@ runFunc = function(task, settingsTable){
       dir.create("localOutput/")
     }
     
-    out = list(SCR = out.intRcpp, OCC = out.occ, DATA = scrData)
+    out = list(SCR = out.intRcpp, OCC = out.occ, DATA = list(N = scrData$N, K = scrData$K, n = scrData$n, 
+                                                             nscap = scrData$nscap, sumscap = scrData$sumscap, 
+                                                             buff = scrData$buff, psi.bar = scrData$psi.bar, p.bar = scrData$p.bar, seed = scrData$seed))
     
     save(out, file = paste0("localOutput/out_task_", task, ".Rdata"))
     
