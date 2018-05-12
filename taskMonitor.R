@@ -119,10 +119,10 @@ ui = fluidPage(
                                 ,sliderInput("k", label = "Select smooth parameter", min = 2, max = 10, value = 2, step = 1)
                          ),
                          column(3
-                                ,shiny::numericInput('hours', label = 'Show how many hours before now? Default is 5.', min = 1, max = 5*24, step = 5, value = 5)
+                                ,shiny::numericInput('hours', label = 'Show how many hours before now? Default is 5.', min = 1, max = 5*24, step = 5, value = 1)
                          ),
                          column(3
-                                ,shiny::sliderInput('frac', label = 'Select fraction of data to view (for efficiency)', min = 0.01, max = 1, value = 0.1, step = 0.01)
+                                ,shiny::sliderInput('frac', label = 'Select fraction of data to view (for efficiency)', min = 0.01, max = 1, value = 1, step = 0.01)
                          ),
                          column(3
                                 ,shiny::sliderInput('fracRegression', label = "Fraction of data to perform regression upon (weighted by date)?", 
@@ -241,8 +241,9 @@ server = function(input, output, session){
                                      Duration = ifelse(timeStarted > 0 & timeEnded > 0, (timeEnded - timeStarted)/60, 0),
                                      newTaskID = 1:nrow(.))
     
-    startEnd = taskTable_formatted %>% filter(completed == 1 | inProgress == 1, complete.cases(.)) %>% 
-      sample_frac(size = input$frac, weight = timeEnded %>% as.numeric()) %>% arrange(timeStarted, timeEnded) %>% 
+    startEnd = taskTable_formatted %>% filter(completed == 1 | inProgress == 1) %>% 
+      sample_frac(size = input$frac) %>% 
+      arrange(timeStarted, timeEnded) %>% 
       mutate(timeStarted = as.POSIXct(timeStarted, origin = origin), timeEnded = as.POSIXct(timeEnded, origin = origin)) %>% 
       select(newTaskID, timeStarted, timeEnded, owner)  %>% melt(id.vars = c('newTaskID', 'owner')) %>% rename("StartEnd" = variable, "Time" = value) %>% 
       filter((Sys.time() - Time %>% as.numeric()) < input$hours*60*60)
@@ -267,7 +268,7 @@ server = function(input, output, session){
       add_lines(data = newdata, x = ~newTaskID, y = ~Time, name = 'GAM Predict') %>% 
       add_ribbons(data = newdata, x = ~newTaskID, ymax = ~Upper, ymin = ~Lower, fillcolor = 'rgba(255, 156, 0, 0.2)', line = list(color = 'rgba(255, 156, 0, 0.05'), showlegend = F) %>% 
       layout(
-        xaxis = list(range = c(1,max(startEnd$newTaskID) + 0.1*(max(startEnd$newTaskID)))),
+        xaxis = list(range = c(min(startEnd$newTaskID),max(startEnd$newTaskID))),
         yaxis = list(range = c(min(startEnd$Time, na.rm = T) - buff, max(startEnd$Time, na.rm = T) + buff))
       )
     
