@@ -113,6 +113,8 @@ while(length(reservedTasks) > 0){
     
   foreach(task = reservedTasks, .packages = c("Rcpp", "RSQLite", "DBI","SPIM")) %dopar% {runFunc(task, settingsTable)}
   
+  gc()
+  
   # Reserve some more tasks 
   reservedTasks = reserveTasks(numTasks = numTasks)
   
