@@ -150,15 +150,15 @@ runFunc = function(task, settingsTable){
     # Will source with Ben's SPIM package - otherwise source here.
     if(!require(SPIM)){sourceCpp("intlikRcpp.cpp")}
     
-    # Check for tasks already done (if job cancelled)
-    files = dir(path = 'localOutput', pattern = ".Rdata")
-    matches = (regmatches(x = files, m = gregexpr(pattern = '\\d+', text = files, perl = T)))
-    done = do.call(what = rbind, args = lapply(matches, as.integer))
+    # # Check for tasks already done (if job cancelled)
+    # files = dir(path = 'localOutput', pattern = ".Rdata")
+    # matches = (regmatches(x = files, m = gregexpr(pattern = '\\d+', text = files, perl = T)))
+    # done = do.call(what = rbind, args = lapply(matches, as.integer))
     
-    if(task %in% done){
-      updateTaskCompleted(reservedTasks = task)
-      return(paste("Task", task, "was already completed"))
-    }
+    # if(task %in% done){
+    #   updateTaskCompleted(reservedTasks = task)
+    #   return(paste("Task", task, "was already completed"))
+    # }
     
     settingsLocal = settingsTable[settingsTable$taskID == task,]
       
