@@ -16,7 +16,11 @@ googledrive::drive_auth()
 
 # files = c('test1.csv', 'test2.csv')
 
-uploadFiles = function(filePaths, drivePath, par = F){
+uploadFiles = function(outFolder, drivePath, par = F){
+  
+  # Get local files
+  
+  filePaths = dir(path = 'localOutput/', pattern = '.Rdata')
   
   # Check path format - must end in backslash
   lastChar = substr(drivePath, start = nchar(drivePath), stop = nchar(drivePath))
@@ -34,6 +38,10 @@ uploadFiles = function(filePaths, drivePath, par = F){
     }
 
   filePaths = filePaths[uploadIndex]
+  
+  filePaths = paste0(outFolder, filePaths)
+  
+  message(paste0(length(filePaths), " files to be uploaded."))
 
   if(length(filePaths) > 1){
   
@@ -51,7 +59,12 @@ uploadFiles = function(filePaths, drivePath, par = F){
       
       message(paste0("Uploading ", length(filePaths), " files serially . . ."))
       
-      lapply(X = filePaths, FUN = function(f){googledrive::drive_upload(media = f, path = drivePath)})
+      # lapply(X = filePaths, FUN = function(f){googledrive::drive_upload(media = f, path = drivePath)})
+      
+      for(i in 1:length(filePaths)){
+        googledrive::drive_upload(media = filePaths[i], path = drivePath)
+        message(paste0('Uploading file ', i, ' of ', length(filePaths), ' at ', Sys.time()))
+      }
       
     }
     
@@ -62,7 +75,7 @@ uploadFiles = function(filePaths, drivePath, par = F){
     googledrive::drive_upload(media = filePaths, path = drivePath)
     
   }
-  message("Upload complete")
+  message(paste0("Upload of ", length(filePaths), " file(s) complete at ", Sys.time()))
   
   }
   

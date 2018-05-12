@@ -91,7 +91,7 @@ ui = fluidPage(
                        fluidRow(
                          column(12
                                 ,htmlOutput("user")
-                                ,plotOutput("progressBar", height = '100px')
+                                # ,plotOutput("progressBar", height = '100px')
                                 ,htmlOutput("tasksCompleted")
                                 ,shiny::hr()
                                 ,h4("Search a date, or search your user name to see your tasks! (shown up above in the greeting).")
