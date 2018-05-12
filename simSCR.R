@@ -145,7 +145,7 @@ simSCR<- function(D = 0.83333,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 
    return(out)
  }
 
-runFunc = function(task, settingsTable){
+runFunc = function(task){
     
     # Will source with Ben's SPIM package - otherwise source here.
     if(!require(SPIM)){sourceCpp("intlikRcpp.cpp")}
@@ -158,10 +158,14 @@ runFunc = function(task, settingsTable){
     # if(task %in% done){
     #   updateTaskCompleted(reservedTasks = task)
     #   return(paste("Task", task, "was already completed"))
-    # }
-    
-    settingsLocal = settingsTable[settingsTable$taskID == task,]
+    #   }
       
+    conLocal = dbConnect(SQLite(), 'settings.sqlite')
+    
+    settingsLocal = dbGetQuery(conn = conLocal, statement = paste0('SELECT * FROM settings WHERE taskID = ', task))
+    
+    dbDisconnect(conLocal)
+    
     extract(settingsLocal) # Assign all components (D, lam0, etc.) to scoped to FUNCTION environment - won't affect other tasks.
     
     # Generate trap array ---------------------------------------------------------------------------------

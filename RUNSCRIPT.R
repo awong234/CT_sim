@@ -104,16 +104,12 @@ reservedTasks = reserveTasks(numTasks = numTasks)
 # reservedTasks = c(1,1001,2001,3001,4001)
 
 while(length(reservedTasks) > 0){
-  
-  conLocal = dbConnect(SQLite(), 'settings.sqlite')
-  
-  settingsTable = dbGetQuery(conn = conLocal, statement = paste0('SELECT * FROM settings WHERE taskID IN (', toString(reservedTasks), ")"))
-  
-  dbDisconnect(conLocal)
     
-  foreach(task = reservedTasks, .packages = c("Rcpp", "RSQLite", "DBI","SPIM")) %dopar% {runFunc(task, settingsTable)}
+  foreach(task = reservedTasks, .packages = c("Rcpp", "RSQLite", "DBI","SPIM")) %dopar% {runFunc(task)}
   
   gc()
+
+  updateTasksCompleted(reservedTasks = reservedTasks)
   
   # Reserve some more tasks 
   reservedTasks = reserveTasks(numTasks = numTasks)
