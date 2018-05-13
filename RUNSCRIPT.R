@@ -119,7 +119,7 @@ while(length(reservedTasks) > 0){
   
   gc()
 
-  updateTasksCompleted(reservedTasks = reservedTasks)
+  updateTaskCompleted(reservedTasks = reservedTasks)
   
   # Reserve some more tasks 
   reservedTasks = reserveTasks(numTasks = numTasks)
