@@ -115,10 +115,11 @@ reservedTasks = settingsLocal$taskID
 
 while(length(reservedTasks) > 0){
     
-  foreach(task = reservedTasks, .packages = c("Rcpp", "RSQLite", "DBI","SPIM")) %dopar% {runFunc(task)}
+  foreach(task = reservedTasks, .packages = c("Rcpp", "RSQLite", "DBI","SPIM")) %dopar% {
+    runFunc(task)
+    gc()
+    }
   
-  gc()
-
   updateTaskCompleted(reservedTasks = reservedTasks)
   
   # Reserve some more tasks 
