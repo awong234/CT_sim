@@ -167,7 +167,7 @@ runFunc = function(task, debug = T){
     extract(settingsLocal) # Assign all components (D, lam0, etc.) to scoped to FUNCTION environment - won't affect other tasks.
     
     # Generate trap array ---------------------------------------------------------------------------------
-    X = build.cluster.alt(ntraps = nTraps, ntrapsC = ntrapsC, spacingin = spaceIn, spacingout = spaceOut)
+    X = build.cluster.alt(ntraps = nTraps, ntrapsC = ntrapsC, spacingin = spaceIn, spacingout = spaceOut,plotit=FALSE)
     
     # Simulate activity centers ---------------------------------------------------------------------------
     
@@ -199,7 +199,7 @@ runFunc = function(task, debug = T){
       if(N < 10){stop("Insufficient population size (N < 10) for estimation.")}
       buff = data[['buff']]
       K = data[['K']]
-      parm=c(log(thinRate2),log(sigma),log(N-nrow(y)+1))
+      parm=c(qlogis(lam0*thinRate1*thinRate2),log(sigma),log(N-nrow(y)+1))
       delta=0.25 #state space spacing
       #make state space
       Xl <- min(X[, 1]) - buff
@@ -229,7 +229,7 @@ runFunc = function(task, debug = T){
       y=data[['y.occ']]
       K=data[['K']]
       #LL function from Applied Hierarchical Models book page 43.
-      parm=c(qlogis(0.5),qlogis(0.5)) #starting values p=0.4, psi=0.9
+      parm=c(qlogis(data$p.bar),qlogis(data$psi.bar)) #starting values
       negLogLikeocc=function(parm,y,K){
         p=plogis(parm[1])
         psi=plogis(parm[2])
