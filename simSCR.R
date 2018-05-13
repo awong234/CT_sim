@@ -139,8 +139,8 @@ simSCR<- function(D = 0.83333,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 
    out<-list(K=K,n=n,nscap=nscap,sumscap=sumscap,buff=buff,
              psi.bar = mean(psi.grid),p.bar=p.bar,
              N = N, # may as well return this too
-             seed = seed
-             # y.use=y.use,y.det=y.det,y.occ=y.occ,y.scr=y,s=s,X=X, 
+             seed = seed,
+             y.use=y.use,y.det=y.det,y.occ=y.occ,y.scr=y,s=s,X=X
              )
    return(out)
  }
@@ -165,7 +165,7 @@ runFunc = function(task, settingsTable){
     extract(settingsLocal) # Assign all components (D, lam0, etc.) to scoped to FUNCTION environment - won't affect other tasks.
     
     # Generate trap array ---------------------------------------------------------------------------------
-    X = build.cluster.alt(ntraps = nTraps, ntrapsC = ntrapsC, spacingin = spaceIn, spacingout = spaceOut)
+    X = build.cluster.alt(ntraps = nTraps, ntrapsC = ntrapsC, spacingin = spaceIn, spacingout = spaceOut,plotit=FALSE)
     
     # Simulate activity centers ---------------------------------------------------------------------------
     
@@ -188,7 +188,7 @@ runFunc = function(task, settingsTable){
     
     scrAnalysis = function(data){
       
-      scaps = data[['sumscaps']]
+      scaps = data[['sumscap']]
       if(scaps < 3){stop("Insufficient recaptures (scaps < 3) for estimation.")}
       y=apply(data[['y.scr']],c(1,2),sum)
       n=data[['n']]
@@ -197,7 +197,7 @@ runFunc = function(task, settingsTable){
       if(N < 10){stop("Insufficient population size (N < 10) for estimation.")}
       buff = data[['buff']]
       K = data[['K']]
-      parm=c(log(thinRate2),log(sigma),log(N-nrow(y)+1))
+      parm=c(qlogis(lam0*thinRate1*thinRate2),log(sigma),log(N-nrow(y)+1))
       delta=0.25 #state space spacing
       #make state space
       Xl <- min(X[, 1]) - buff
@@ -227,7 +227,7 @@ runFunc = function(task, settingsTable){
       y=data[['y.occ']]
       K=data[['K']]
       #LL function from Applied Hierarchical Models book page 43.
-      parm=c(qlogis(0.5),qlogis(0.5)) #starting values p=0.4, psi=0.9
+      parm=c(qlogis(data$p.bar),qlogis(data$psi.bar)) #starting values
       negLogLikeocc=function(parm,y,K){
         p=plogis(parm[1])
         psi=plogis(parm[2])

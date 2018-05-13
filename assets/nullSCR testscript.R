@@ -107,7 +107,7 @@ data=simSCR(N=N,lam0=lam0,sigma=sigma,K=K,X=X,
 #not captured. N_hat is n0_hat+n, the number captured.
 y=apply(data$y.scr,c(1,2),sum)
 n=data$n
-parm=c(log(p0),log(sigma),log(N-nrow(y)))
+parm=c(qlogis(p0),log(sigma),log(N-nrow(y)))
 delta=0.25 #state space spacing
 #make state space
 Xl <- min(X[, 1]) - buff
