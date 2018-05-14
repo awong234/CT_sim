@@ -143,7 +143,7 @@ simSCR<- function(D = 0.83333,lam0=2,sigma=0.50,K=10,X ,buff=3,thinning.rate1 = 
    return(out)
  }
 
-runFunc = function(task, debug = T){
+runFunc = function(task, debug = F){
     
     # Will source with Ben's SPIM package - otherwise source here.
     if(!require(SPIM)){sourceCpp("intlikRcpp.cpp")}
@@ -241,15 +241,18 @@ runFunc = function(task, debug = T){
     }
     
     # One at a time
-    
-    out.intRcpp = tryCatch(expr = {scrAnalysis(data = scrData)},
+    if(debug){
+      out.intRcpp = scrAnalysis(data = scrData)
+      out.occ = occAnalysis(data = scrData)
+    }else{
+
+      out.intRcpp = tryCatch(expr = {scrAnalysis(data = scrData)},
              error = function(e){e})
   
-    out.occ = tryCatch(expr = {occAnalysis(data = scrData)},
-             error = function(e){e})
-    
-    # out.intRcpp = scrAnalysis(data = scrData)
-    # out.occ = occAnalysis(data = scrData)
+      out.occ = tryCatch(expr = {occAnalysis(data = scrData)},
+              error = function(e){e})
+
+    }
     
     # perform simultaneously . . . ? CAN'T EXPORT RCPP FUNCTION WITHOUT COMPILING ON EACH WORKER NODE.
       
