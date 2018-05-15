@@ -102,7 +102,7 @@ updateTaskCompleted = function(reservedTasks = NULL){
   
   # # # # Change values in connected table # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   
-  statement = paste0("UPDATE tasklistntres SET inProgress = 0, completed = 1, timeEnded = ", as.integer(Sys.time()), " WHERE taskID IN (", toString(reservedTasks), ");")
+  statement = paste0("UPDATE tasklistntres SET inProgress = 0, completed = 1, timeEnded = ", as.integer(Sys.time()), " WHERE taskID IN (", toString(reservedTasks), ") AND completed = 0")
 
   test = NULL
   
