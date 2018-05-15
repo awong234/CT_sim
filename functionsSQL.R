@@ -127,7 +127,7 @@ printDB = function(){ # perform a simple read on the server database
   
   con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql6.gear.host;Database=tasklistntres;Uid=tasklistntres;Pwd=Gy435_eN5-Ry;")
   
-  taskList = dbGetQuery(conn = con, statement = "SELECT TOP 100 * FROM tasklistntres ORDER BY timeStarted DESC")
+  taskList = dbGetQuery(conn = con, statement = "SELECT * FROM tasklistntres")
   
   dbDisconnect(con)
   
