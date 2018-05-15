@@ -98,17 +98,17 @@ system(command = 'subroutine.bat', wait = F, invisible = F)
 
 # PARALLEL once again. all settings combos / replicates are available to grab on server as per conversation on 2018-04-25.
 
-# reservedTasks = reserveTasks(numTasks = numTasks)
+reservedTasks = reserveTasks(numTasks = numTasks)
 
 # Debug with large pop
 
-conLocal = dbConnect(SQLite(), 'settings.sqlite')
-
-settingsLocal = dbGetQuery(conn = conLocal, statement = paste0('SELECT * FROM settings WHERE ntraps = 120 AND lam0 = 0.02 AND D = 0.5 LIMIT 20'))
-
-dbDisconnect(conLocal)
-
-reservedTasks = settingsLocal$taskID
+# conLocal = dbConnect(SQLite(), 'settings.sqlite')
+# 
+# settingsLocal = dbGetQuery(conn = conLocal, statement = paste0('SELECT * FROM settings WHERE ntraps = 120 AND lam0 = 0.02 AND D = 0.5 LIMIT 20'))
+# 
+# dbDisconnect(conLocal)
+# 
+# reservedTasks = settingsLocal$taskID
 
 # DEBUG PURPOSES
 # reservedTasks = c(1,1001,2001,3001,4001)
