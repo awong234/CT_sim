@@ -18,7 +18,17 @@ subrt_updateComplete = function(){
     
     statement = paste0("SELECT taskID FROM tasklistntres WHERE owner = \'", Sys.info()['nodename'], "\' AND inProgress = 1")
     
-    out = dbGetQuery(conn = con, statement = statement)
+    test = NULL
+    
+    while(is.null(test)){
+      
+      test = tryCatch(expr = {out = dbGetQuery(conn = con, statement = statement)},
+                      error = function(e){
+                        # message(e)
+                        Sys.sleep(rpois(n = 1, lambda = 5))
+                      }
+      )
+    }
     
     dbDisconnect(conn = con)
     
