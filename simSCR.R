@@ -160,7 +160,18 @@ runFunc = function(task, debug = F){
       
     conLocal = dbConnect(SQLite(), 'settings.sqlite')
     
-    settingsLocal = dbGetQuery(conn = conLocal, statement = paste0('SELECT * FROM settings WHERE taskID = ', task))
+    statement = paste0('SELECT * FROM settings WHERE taskID = ', task)
+    
+    test = NULL
+    
+    while(is.null(test)){
+      
+      test = tryCatch(expr = {settingsLocal = dbGetQuery(conn = conLocal, statement = statement)},
+                      error = function(e){
+                        Sys.sleep(rpois(n = 1, lambda = 2))
+                      }
+      )
+    }
     
     dbDisconnect(conLocal)
     
