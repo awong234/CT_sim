@@ -36,47 +36,47 @@ if(!file.exists('settings.sqlite')){
 
 ##### Write new settings table as per discussion on May 20. #######
 
-# oldSettings = writeSettings_iter_1(nreps = 1, uniqueOnly = T)
-
-# newSettings = writeSettings_iter_2(nreps = 1, uniqueOnly = T)
-
-newSettings_full = writeSettings_iter_2(nreps = 200)
-
-con = dbConnect(SQLite(), 'settings.sqlite')
-
-oldTable = dbReadTable(conn = con, name = 'settings')
-
-dbDisconnect(con)
-
-# Want everything up until task 335742. This is the last task completed during the pause in Memorial Day weekend.
-
-lastTask = 335742
-
-oldTable_portion = oldTable %>% filter(taskID <= lastTask) %>% select(taskID, nTraps : grid.space)
-oldTable_portion$HASH = apply(X = oldTable_portion[,2:13], MARGIN = 1, FUN = function(x){digest(x, algo = 'md5')})
-
-# Now we want to get everything after task 335742 that matches the new desired settings.
-
-# Rewrite the taskID's to start from the last task + 1
-
-newSettings_full$taskID = seq(lastTask+1, (nrow(newSettings_full)+lastTask))
-
-newSettings_full = newSettings_full %>% select(-settingID, -replicate)
-
-newSettingsTable = rbind.data.frame(oldTable_portion, newSettings_full)
-
-hashOrder = order(newSettingsTable$HASH, newSettingsTable$taskID)
-hashSorted = newSettingsTable$HASH[hashOrder]
-replicateVec = sapply(X = table(hashSorted) %>% as.integer, function(x){seq(1,x)}) %>% do.call(what = c, args = .)
-
-newSettingsTable$replicate[hashOrder] = replicateVec
-
-conLocal = dbConnect(SQLite(), 'settings_v2.sqlite')
-
-dbWriteTable(conn = conLocal, name = 'settings', value = newSettingsTable)
-
-dbDisconnect(conLocal)
-
-save(list = "newSettingsTable", file = 'settings_v2.Rdata')
-
-# End
+if(!file.exists('settings_v2.sqlite')){
+  
+  newSettings_full = writeSettings_iter_2(nreps = 200)
+  
+  con = dbConnect(SQLite(), 'settings.sqlite')
+  
+  oldTable = dbReadTable(conn = con, name = 'settings')
+  
+  dbDisconnect(con)
+  
+  # Want everything up until task 335742. This is the last task completed during the pause in Memorial Day weekend.
+  
+  lastTask = 335742
+  
+  oldTable_portion = oldTable %>% filter(taskID <= lastTask) %>% select(taskID, nTraps : grid.space)
+  oldTable_portion$HASH = apply(X = oldTable_portion[,2:13], MARGIN = 1, FUN = function(x){digest(x, algo = 'md5')})
+  
+  # Now we want to get everything after task 335742 that matches the new desired settings.
+  
+  # Rewrite the taskID's to start from the last task + 1
+  
+  newSettings_full$taskID = seq(lastTask+1, (nrow(newSettings_full)+lastTask))
+  
+  newSettings_full = newSettings_full %>% select(-settingID, -replicate)
+  
+  newSettingsTable = rbind.data.frame(oldTable_portion, newSettings_full)
+  
+  hashOrder = order(newSettingsTable$HASH, newSettingsTable$taskID)
+  hashSorted = newSettingsTable$HASH[hashOrder]
+  replicateVec = sapply(X = table(hashSorted) %>% as.integer, function(x){seq(1,x)}) %>% do.call(what = c, args = .)
+  
+  newSettingsTable$replicate[hashOrder] = replicateVec
+  
+  conLocal = dbConnect(SQLite(), 'settings_v2.sqlite')
+  
+  dbWriteTable(conn = conLocal, name = 'settings', value = newSettingsTable)
+  
+  dbDisconnect(conLocal)
+  
+  save(list = "newSettingsTable", file = 'settings_v2.Rdata')
+  
+  # End
+  
+}
