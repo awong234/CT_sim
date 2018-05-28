@@ -1,6 +1,7 @@
 
 for(i in 1:2){
   if(!require(dplyr)){install.packages('dplyr')}
+  if(!require(digest)){install.packages('digest')}
 }
 
 
@@ -12,7 +13,7 @@ for(i in 1:2){
 
 # It's a function to avoid all of the side effects from specifying the individual settings parameters.
 
-writeSettings <- function(nreps) {
+writeSettings_iter_1 <- function(nreps, uniqueOnly = F) {
   
   # Number of traps
   nTraps = c(40, 80, 120)
@@ -72,14 +73,98 @@ writeSettings <- function(nreps) {
   
   attr(settings, which = c("out.attrs")) = NULL
   
+  # For true identification of tasks
+  settings$HASH = apply(settings, 1, function(x){digest(x, algo = 'md5')})
+  
+  if(uniqueOnly){return(settings)}
+  
   # any(settings %>% duplicated()) # No duplicates
   
+  # For sorting, settingID
   settings = settings %>% mutate(settingID = seq(1,nrow(.))) %>% filter(spaceOut >= spaceIn)
   
   # NOW duplicate nreps times
   
   settingsLong = settings[rep(1:nrow(settings), each = nreps),] %>% cbind.data.frame(., "replicate" = 1:nreps) %>% arrange(replicate, settingID) %>% cbind.data.frame("taskID" = 1:nrow(.)) %>% 
-    select(taskID, settingID, replicate, nTraps:grid.space)
+    select(taskID, settingID, replicate, nTraps:grid.space, HASH)
+  
+  return(settingsLong)
+  
+}
+
+writeSettings_iter_2 <- function(nreps, uniqueOnly = F) {
+  
+  # Number of traps
+  nTraps = c(40, 80, 120)
+  
+  # Number of traps in a cluster
+  ntrapsC = c(1,2,3,4,5,6,7,9,11,13,15)
+  
+  # Within cluster spacing
+  spaceIn = seq(0.5, 3, by = 0.2)
+  
+  # Among cluster spacing
+  spaceOut = c(1.5, 1.75, 2, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5)
+  
+  # Settings for population sim -------------------------------
+  
+  # sigma - Ben mentioned that since spacing is relative to sigma, this needs not be varied.
+  sigma = 1.0
+  
+  # lam0
+  lam0 = c(0.005, 0.01, 0.02)
+  
+  # K
+  K = 60
+  
+  # Density
+  D = c(0.20, 0.5)
+  
+  # Buffer
+  buff = 3
+  
+  # thinning.rate1
+  thinRate1 = c(0.6)
+  
+  # thinning.rate2
+  thinRate2 = c( 0.8)
+  
+  # Grid spacing
+  
+  gridSpace = c(0.5)
+  
+  
+  # Expand all combos ---------------------------------------------------------------------------------------------------
+  
+  settings = expand.grid(nTraps = nTraps, 
+                         ntrapsC = ntrapsC, 
+                         spaceIn = spaceIn, 
+                         spaceOut = spaceOut, 
+                         sigma = sigma, 
+                         lam0 = lam0, 
+                         K = K,
+                         D = D, 
+                         buff = buff, 
+                         thinRate1 = thinRate1, 
+                         thinRate2 = thinRate2, 
+                         grid.space = gridSpace)
+  
+  attr(settings, which = c("out.attrs")) = NULL
+  
+  # For true identification of tasks
+  settings$HASH = apply(settings, 1, function(x){digest(x, algo = 'md5')})
+  
+  if(uniqueOnly){return(settings)}
+  
+  # any(settings %>% duplicated()) # No duplicates
+  
+  # For sorting, settingID
+  settings = settings %>% mutate(settingID = seq(1,nrow(.))) %>% filter(spaceOut >= spaceIn)
+  
+  # NOW duplicate nreps times
+  
+  settingsLong = settings[rep(1:nrow(settings), each = nreps),] %>% cbind.data.frame(., "replicate" = 1:nreps) %>% arrange(replicate, settingID) %>% cbind.data.frame("taskID" = 1:nrow(.)) %>% 
+    select(taskID, settingID, replicate, nTraps:grid.space, HASH)
   
   return(settingsLong)
   
