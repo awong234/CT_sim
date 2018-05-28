@@ -91,7 +91,7 @@ ui = fluidPage(
                        fluidRow(
                          column(12
                                 ,htmlOutput("user")
-                                # ,plotOutput("progressBar", height = '100px')
+                                ,shiny::numericInput(inputId = 'numTasks', label = "Number of prior tasks to get from server", value = 100000, min = 10, max = 3e6)
                                 ,htmlOutput("tasksCompleted")
                                 ,shiny::hr()
                                 ,h4("Search a date, or search your user name to see your tasks! (shown up above in the greeting).")
@@ -163,6 +163,26 @@ server = function(input, output, session){
   
   userTable = printDBsafe(con = con, name = 'registerusers')
   
+  taskTable = reactive({
+    
+    con <- DBI::dbConnect(drv = odbc::odbc(),
+                          driver = "SQL Server",
+                          database = 'tasklistntres',
+                          server = 'den1.mssql6.gear.host',
+                          uid = 'tasklistntres',
+                          pwd = 'Gy435_eN5-Ry')
+    
+    taskTable = dbGetQuery(conn = con, statement = paste0("SELECT TOP ", input$numTasks," * FROM tasklistntres WHERE owner <> 'NONE' ORDER BY timeStarted DESC"))
+    
+    if(nrow(taskTable) == 0){
+      taskTable = dbGetQuery(conn = con, statement = "SELECT TOP 1000 * FROM tasklistntres ORDER BY taskID")
+    }
+    dbDisconnect(con)
+    
+    return(taskTable)
+    
+  })
+  
   con <- DBI::dbConnect(drv = odbc::odbc(),
                         driver = "SQL Server",
                         database = 'tasklistntres',
@@ -170,13 +190,11 @@ server = function(input, output, session){
                         uid = 'tasklistntres',
                         pwd = 'Gy435_eN5-Ry')
   
-  taskTable = dbGetQuery(conn = con, statement = "SELECT * FROM tasklistntres WHERE owner <> 'NONE'")
   
-  if(nrow(taskTable) == 0){
-    taskTable = dbGetQuery(conn = con, statement = "SELECT TOP 1000 * FROM tasklistntres ORDER BY taskID")
-  }
+  maxTasks = 3978942
+  doneTasks = dbGetQuery(conn = con, statement = "SELECT COUNT(*) FROM tasklistntres WHERE completed = 1")
   
-  maxTasks = dbGetQuery(conn = con, statement = "SELECT COUNT(*) FROM tasklistntres") %>% as.integer()
+  dbDisconnect(con)
   
   output$user = renderText(expr = {
     
@@ -187,7 +205,7 @@ server = function(input, output, session){
   
   formatTable = reactive({
     
-    table = taskTable %>% 
+    table = taskTable() %>% 
       mutate(inProgress = as.integer(inProgress), 
              completed = as.integer(completed), 
              `Duration in Minutes` = ifelse(timeStarted > 0 & timeEnded > 0, round((timeEnded - timeStarted)/60, 2), 0),
@@ -213,7 +231,7 @@ server = function(input, output, session){
   
   output$userTasks = renderPlot(expr = {
     
-    endTable = taskTable %>% left_join(userTable, by = c("owner" = "machineName")) %>% group_by(userName) %>% tally() %>% filter(!is.na(userName))
+    endTable = taskTable() %>% left_join(userTable, by = c("owner" = "machineName")) %>% group_by(userName) %>% tally() %>% filter(!is.na(userName))
     
     endTable %>% ggplot() +
       geom_col(aes(x = userName, y = n, fill = userName, alpha = 0.7), width = 0.7) + 
@@ -227,8 +245,8 @@ server = function(input, output, session){
     
     taskTable = formatTable()
     
-    text1 = paste0("<h3>",sum(taskTable$completed) %>% format(big.mark = ','), " of ", maxTasks %>% format(big.mark = ','), " tasks completed.</h3>")
-    text2 = paste0("<h4>", round(100*sum(taskTable$completed) / maxTasks, 2), "% complete.</h4>")
+    text1 = paste0("<h3>", doneTasks %>% format(big.mark = ','), " of ", maxTasks %>% format(big.mark = ','), " tasks completed.</h3>")
+    text2 = paste0("<h4>", round(100*doneTasks / maxTasks, 2), "% complete.</h4>")
     
     HTML(paste(text1, text2, sep = "<br/>"))
     
@@ -236,7 +254,7 @@ server = function(input, output, session){
  
   output$timeChart2 = renderPlotly(expr = {
     
-    taskTable_formatted = taskTable %>% arrange(timeStarted,timeEnded) %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
+    taskTable_formatted = taskTable() %>% arrange(timeStarted,timeEnded) %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
                                      timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA), 
                                      Duration = ifelse(timeStarted > 0 & timeEnded > 0, (timeEnded - timeStarted)/60, 0),
                                      newTaskID = 1:nrow(.))
@@ -287,7 +305,7 @@ server = function(input, output, session){
   
   output$timeEstimate = renderText(expr = {
 
-    out = regressions(taskTable = taskTable %>% arrange(timeStarted,timeEnded) %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
+    out = regressions(taskTable = taskTable() %>% arrange(timeStarted,timeEnded) %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
                                                                                           timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA), 
                                                                                           Duration = ifelse(timeStarted > 0 & timeEnded > 0, (timeEnded - timeStarted)/60, 0),
                                                                                           newTaskID = 1:nrow(.)), 
