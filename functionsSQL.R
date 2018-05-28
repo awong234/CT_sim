@@ -23,6 +23,15 @@ reserveTasks = function(numTasks = NULL){
   
   con <- dbConnect(odbc::odbc(), .connection_string = "Driver={SQL Server};Server=den1.mssql6.gear.host;Database=tasklistntres;Uid=tasklistntres;Pwd=Gy435_eN5-Ry;")
   
+  # # # # Check to see if tasks must be killed # # # # 
+  
+  killswitch = dbReadTable(conn = con, name = 'killswitch')
+  
+  if(killswitch$RUNNING == 0){
+    message("The administrator has ended task processing remotely.")
+    return(integer(0))
+    }
+  
   # # # # Check to see if tasks taken by computer are not done yet - in event of unexpected shutdowns. # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
   
   # Is your computer 'working on' an event at the time of this check? If so, it never finished from the previous startup.
