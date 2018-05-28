@@ -1,3 +1,11 @@
+setWDHere = function(){
+  sourcePath<-rstudioapi::getSourceEditorContext()$path[1]  # gets the location of the script that this piece of code is in
+  sourceLoc<-strsplit(sourcePath, "/SETUP.R")[[1]][1] # get the parent folder
+  setwd(sourceLoc) # set the wd to the parent folder
+}
+
+setWDHere()
+
 # SETUP file to be run on the first time of analysis or when new versions are pushed to the github.
 
 # For ease of use, install SPIM manually using the Tools > Install Packages Dialog.
