@@ -73,12 +73,10 @@ newSettingsTable$replicate[hashOrder] = replicateVec
 
 conLocal = dbConnect(SQLite(), 'settings_v2.sqlite')
 
-dbWriteTable(conn = conLocal, name = 'settings')
+dbWriteTable(conn = conLocal, name = 'settings', value = newSettingsTable)
 
 dbDisconnect(conLocal)
 
-# Uncomment the following ONLY if you cannot install SPIM via .zip file. Unlikely.
+save(list = "newSettingsTable", file = 'settings_v2.Rdata')
 
-# # Install SPIM automatically from Github.
-# if(!require(devtools)){install.packages('devtools')}
-# if(!require(SPIM) & find_rtools()){install_github('benaug/SPIM')}
+# End
