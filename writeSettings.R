@@ -11,7 +11,7 @@ for(i in 1:2){
 
 # Settings for trap design ----------------------------------
 
-# It's a function to avoid all of the side effects from specifying the individual settings parameters.
+# WriteSettings_iter_1 is the original set of settings operated upon. It remains as a way to get all the settings done up until Memorial Day 2018.
 
 writeSettings_iter_1 <- function(nreps, uniqueOnly = F) {
   
@@ -74,7 +74,7 @@ writeSettings_iter_1 <- function(nreps, uniqueOnly = F) {
   attr(settings, which = c("out.attrs")) = NULL
   
   # For true identification of tasks
-  settings$HASH = apply(settings, 1, function(x){digest(x, algo = 'md5')})
+  # settings$HASH = apply(settings, 1, function(x){digest(x, algo = 'md5')})
   
   if(uniqueOnly){return(settings)}
   
@@ -86,7 +86,7 @@ writeSettings_iter_1 <- function(nreps, uniqueOnly = F) {
   # NOW duplicate nreps times
   
   settingsLong = settings[rep(1:nrow(settings), each = nreps),] %>% cbind.data.frame(., "replicate" = 1:nreps) %>% arrange(replicate, settingID) %>% cbind.data.frame("taskID" = 1:nrow(.)) %>% 
-    select(taskID, settingID, replicate, nTraps:grid.space, HASH)
+    select(taskID, settingID, replicate, nTraps:grid.space)
   
   return(settingsLong)
   
