@@ -158,7 +158,7 @@ runFunc = function(task, debug = F){
     #   return(paste("Task", task, "was already completed"))
     #   }
       
-    conLocal = dbConnect(SQLite(), 'settings.sqlite')
+    conLocal = dbConnect(SQLite(), 'settings_v2.sqlite')
     
     statement = paste0('SELECT * FROM settings WHERE taskID = ', task)
     
