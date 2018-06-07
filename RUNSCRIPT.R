@@ -43,7 +43,6 @@ source('functionsSQL.R')
 
 for(i in 1:2){
   if(!require(doParallel)){install.packages('doParallel')}
-  if(!require(googledrive)){install.packages('googledrive')}
   if(!require(parallel)){install.packages('parallel')}
   if(!require(Rcpp)){install.packages('Rcpp')}
   if(!require(RSQLite)){install.packages('RSQLite')}
@@ -66,27 +65,13 @@ source('simSCR.R')
 # to 2 cores, for example. When your computer is free, restart this process with
 # as many cores as you have for max performance.
 
-cores = detectCores() - 1 
+cores = detectCores() - 1
+# cores = detectCores() / 2
 
 # How many tasks to do at once?
 numTasks = cores^2
 
 registerDoParallel(cores = cores) 
-
-# Automatic uploads? WARNING: VERY SLOW
-
-# First time run will take you to a web page to authorize `googledrive` to
-# access your drive account. You will want to make sure to have CT_sim_outputs
-# already in your drive in the top-most directory!
-
-autoUpload = F
-
-if(autoUpload){source('uploadOutput.R')}
-
-files = dir(path = 'localOutput/', pattern = ".Rdata")
-
-# Where did you put the shared folder in your drive?
-drivePath = 'CT_sim_outputs/'
 
 # Analysis loop ----------------------------------------------------------------------------------------------------
 
@@ -124,8 +109,6 @@ while(length(reservedTasks) > 0){
   
   # Reserve some more tasks 
   reservedTasks = reserveTasks(numTasks = numTasks)
-  
-  if(autoUpload){uploadFiles(filePaths = paste0('localOutput/',files), drivePath = drivePath, par = F)}
   
 }
 
