@@ -8,3 +8,4 @@ reservedTasks.csv
 *.csv
 *.Rdata
 *.sqlite
+viewTaskTimes.R
