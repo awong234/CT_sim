@@ -51,12 +51,22 @@ class LoggingNetwork(DefaultNetwork):
         return response
     
 #%% 
-    
-# Create OAuth2 object. It's already authenticated, thanks to the developer token.
-oauth2 = OAuth2(CLIENT_ID, CLIENT_SECRET, access_token=ACCESS_TOKEN)
+
+redirect_uri = 'http://127.0.0.1:5000/return'
+ 
+oauth2 = OAuth2(CLIENT_ID, CLIENT_SECRET)
+
+csrf_token = ''
+
+global csrf_token
+auth_url, csrf_token = oauth2.get_authorization_url(redirect_url = redirect_uri)
+
+
+access_token, refresh_token = oauth2.authenticate(auth_code = )
 
 # Create the authenticated client
-client = Client(oauth2, LoggingNetwork())
+# client = Client(oauth2, LoggingNetwork())
+client = Client(oauth = oauth2)
 
 #%% 
 
