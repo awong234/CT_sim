@@ -78,6 +78,7 @@ registerDoParallel(cores = cores)
 # Start subroutine for updating completion of tasks. Don't close this window please.
 
 system(command = 'subroutine.bat', wait = F, invisible = F)
+system(command = 'subroutine_autoupload.bat', wait = F, invisible = F)
 
 # Reserve some tasks to be completed. Take as many tasks as you have cores.
 
