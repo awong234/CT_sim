@@ -17,7 +17,7 @@ subrt_upload = function(){
     
   repeat{
     
-    x = box_push(dir_id = 48978104905, local_dir = 'testLocalOutput', overwrite = F, delete = F)
+    x = box_push(dir_id = 48978104905, local_dir = 'localOutput', overwrite = F, delete = F)
     
     boxr_timediff <- function(x) paste0("took ", format(unclass(x), digits = 3), " ", attr(x, "units"))
     
