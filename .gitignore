@@ -9,3 +9,4 @@ reservedTasks.csv
 *.Rdata
 *.sqlite
 viewTaskTimes.R
+~/.boxr-oauth
