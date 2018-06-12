@@ -65,7 +65,11 @@ settingsUnique = settings %>% select(-taskID, -replicate) %>% filter(!duplicated
 
 meanDifferences %>% dplyr::left_join(settingsUnique, by = c("HASH" = "HASH"))
 
+Cairo::Cairo(width = 1000, height = 1000, file = paste0('D_plot.png'), dpi = 150)
+
 outEstSettings %>% 
   ggplot() +
-    geom_point(aes(x = nTraps, y = N_Diff)) + 
-    theme_bw()
+  geom_violin(aes(x = D %>% factor, y = N_Diff, group = D %>% factor)) + 
+  theme_bw() + xlab('D') + ylab("Relative Bias in N")
+
+dev.off()
