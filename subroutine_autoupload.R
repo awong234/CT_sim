@@ -19,11 +19,14 @@ subrt_upload = function(){
     message(paste0('Obtaining directory from Box folder at ', Sys.time() %>% format('%H:%M:%S')))
     
     existing = NULL
+    attempt = 1
     
     while(is.null(existing)){
+      message(paste0("Attempting to retrieve list . . . attempt number ", attempt, " at ", Sys.time() %>% format('%H:%M:%S')))
       try({
         existing = box_ls_short(dir_id = 48978104905)
       })
+      attempt = attempt + 1
     }
     
       
