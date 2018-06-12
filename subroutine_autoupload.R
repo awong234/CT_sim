@@ -13,22 +13,39 @@ clientSecret = ID_lines[2]
 auth = box_auth(client_id = clientID, client_secret = clientSecret)
 
 subrt_upload = function(){
-    
+  
   repeat{
+    
+    message(paste0('Obtaining directory from Box folder at ', Sys.time() %>% format('%H:%M:%S')))
     
     existing = box_ls_short(dir_id = 48978104905)
       
     existing = sapply(X = existing, FUN = `[`, 'name') %>% unlist
     
+    message(paste0('Obtaining set of local files at ', Sys.time() %>% format('%H:%M:%S')))
+    
     localFiles = list.files('localOutput/', full.names = T)
     
     localFiles_names = strsplit(localFiles, split = '/') %>% sapply(FUN = `[`, 2)
     
+    message(paste0('Comparing remote to local set at ', Sys.time() %>% format('%H:%M:%S')))
+    
     toUpload = localFiles[!localFiles_names %in% existing]
     
-    for(file in toUpload){
-      box_ul(dir_id = 48978104905, file = file, pb = T)
+    if(length(toUpload) == 0){
+      
+      message(paste0('No new files to upload. ', Sys.time() %>% format('%H:%M:%S')))
+      
+    }else{
+      
+      message(paste0('Began upload of ', length(toUpload),' files at ', Sys.time() %>% format('%H:%M:%S')))
+      
+      for(file in toUpload){
+        box_ul(dir_id = 48978104905, file = file, pb = T)
+      }
+      
     }
+    
 
     # boxr_timediff <- function(x) paste0("took ", format(unclass(x), digits = 3), " ", attr(x, "units"))
     # 
@@ -48,7 +65,7 @@ subrt_upload = function(){
     # 
     # message(paste(summarise_ops(x$file_list, x$msg_list)))
     
-    Sys.sleep(5*60)
+    Sys.sleep(5)
     
   }
   
