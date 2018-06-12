@@ -257,7 +257,7 @@ server = function(input, output, session){
     taskTable_formatted = taskTable() %>% arrange(timeStarted,timeEnded) %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
                                      timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA), 
                                      Duration = ifelse(timeStarted > 0 & timeEnded > 0, (timeEnded - timeStarted)/60, 0),
-                                     newTaskID = 1:nrow(.))
+                                     newTaskID = seq(0,nrow(.)-1)+min(taskID))
     
     startEnd = taskTable_formatted %>% filter(completed == 1 | inProgress == 1) %>% 
       sample_frac(size = input$frac) %>% 
@@ -308,7 +308,7 @@ server = function(input, output, session){
     out = regressions(taskTable = taskTable() %>% arrange(timeStarted,timeEnded) %>% mutate(timeStarted = ifelse(test = timeStarted > 0, yes = timeStarted, no = NA), 
                                                                                           timeEnded = ifelse(test = timeEnded > 0, yes = timeEnded, no = NA), 
                                                                                           Duration = ifelse(timeStarted > 0 & timeEnded > 0, (timeEnded - timeStarted)/60, 0),
-                                                                                          newTaskID = 1:nrow(.)), 
+                                                                                          newTaskID = seq(0,nrow(.)-1)+min(taskID)), 
                       k = input$k, maxTasks = maxTasks, dataFrac = input$fracRegression)
     
     predictedDates = out$lm
