@@ -1,9 +1,8 @@
 # Upload to drive, test script
 
-source('autoUploadResource.R')
-
 for(i in 1:2){
-  if(!require(boxr)){install.packages('boxr')}
+  if(!require(boxr)){devtools::install_github('awong234/boxr')}
+  if(!require(dplyr)){install.packages('dplyr')}
 }
 
 ID_lines = readLines(con = 'app.cfg')
@@ -14,30 +13,59 @@ clientSecret = ID_lines[2]
 auth = box_auth(client_id = clientID, client_secret = clientSecret)
 
 subrt_upload = function(){
-    
+  
   repeat{
     
-    x = box_push(dir_id = 48978104905, local_dir = 'localOutput', overwrite = F, delete = F)
+    message(paste0('Obtaining directory from Box folder at ', Sys.time() %>% format('%H:%M:%S')))
     
-    boxr_timediff <- function(x) paste0("took ", format(unclass(x), digits = 3), " ", attr(x, "units"))
+    existing = box_ls_short(dir_id = 48978104905)
+      
+    existing = sapply(X = existing, FUN = `[`, 'name') %>% unlist
     
-    f <- x$file_list
+    message(paste0('Obtaining set of local files at ', Sys.time() %>% format('%H:%M:%S')))
     
-    tdif <- boxr_timediff(x$end - x$start)
+    localFiles = list.files('localOutput/', full.names = T)
     
-    message(paste0("\nboxr ", x$operation, " operation\n\n"))
+    localFiles_names = strsplit(localFiles, split = '/') %>% sapply(FUN = `[`, 2)
     
-    message(paste0(
-      "  User           : ", getOption("boxr.username"), "\n",
-      "  Local dir      : ", x$local_tld,                "\n",
-      "  box.com folder : ", x$box_tld_id,               "\n",
-      "  started at     : ", x$start , " (", tdif, ")",  "\n",
-      "\n"
-    ))
+    message(paste0('Comparing remote to local set at ', Sys.time() %>% format('%H:%M:%S')))
     
-    message(paste(summarise_ops(x$file_list, x$msg_list)))
+    toUpload = localFiles[!localFiles_names %in% existing]
     
-    Sys.sleep(5*60)
+    if(length(toUpload) == 0){
+      
+      message(paste0('No new files to upload. ', Sys.time() %>% format('%H:%M:%S')))
+      
+    }else{
+      
+      message(paste0('Began upload of ', length(toUpload),' files at ', Sys.time() %>% format('%H:%M:%S')))
+      
+      for(file in toUpload){
+        box_ul(dir_id = 48978104905, file = file, pb = T)
+      }
+      
+    }
+    
+
+    # boxr_timediff <- function(x) paste0("took ", format(unclass(x), digits = 3), " ", attr(x, "units"))
+    # 
+    # f <- x$file_list
+    # 
+    # tdif <- boxr_timediff(x$end - x$start)
+    # 
+    # message(paste0("\nboxr ", x$operation, " operation\n\n"))
+    # 
+    # message(paste0(
+    #   "  User           : ", getOption("boxr.username"), "\n",
+    #   "  Local dir      : ", x$local_tld,                "\n",
+    #   "  box.com folder : ", x$box_tld_id,               "\n",
+    #   "  started at     : ", x$start , " (", tdif, ")",  "\n",
+    #   "\n"
+    # ))
+    # 
+    # message(paste(summarise_ops(x$file_list, x$msg_list)))
+    
+    Sys.sleep(5)
     
   }
   
