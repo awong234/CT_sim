@@ -18,7 +18,14 @@ subrt_upload = function(){
     
     message(paste0('Obtaining directory from Box folder at ', Sys.time() %>% format('%H:%M:%S')))
     
-    existing = box_ls_short(dir_id = 48978104905)
+    existing = NULL
+    
+    while(is.null(existing)){
+      try({
+        existing = box_ls_short(dir_id = 48978104905)
+      })
+    }
+    
       
     existing = sapply(X = existing, FUN = `[`, 'name') %>% unlist
     
@@ -40,8 +47,9 @@ subrt_upload = function(){
       
       message(paste0('Began upload of ', length(toUpload),' files at ', Sys.time() %>% format('%H:%M:%S')))
       
-      for(file in toUpload){
-        box_ul(dir_id = 48978104905, file = file, pb = T)
+      for(file in 1:length(toUpload)){
+        box_ul(dir_id = 48978104905, file = toUpload[file], pb = F)
+        message(paste0('Uploaded ', toUpload[file],': ', file, ' of ', length(toUpload), ' at ', Sys.time() %>% format('%H:%M:%S')))
       }
       
       message(paste0('Finished upload of ', length(toUpload),' files at ', Sys.time() %>% format('%H:%M:%S'), '. Restarting.'))
