@@ -57,7 +57,7 @@ regressions = function(taskTable, k, maxTasks, dataFrac){
   m = gam(formula = Time %>% as.numeric ~ s(newTaskID, k = k), data = endTimes %>% filter(StartEnd == "timeEnded"))
   
   # Predict GAM to existing tasks
-  hires = seq(1, nrow(taskTableFull) + 1000)
+  hires = seq(1 + min(taskTableFull$taskID), max(taskTableFull$taskID) + 1000)
   newdata = data.frame('newTaskID' = hires, 'Time' = NA)
   newdata$Time = predict.gam(object = m, newdata = newdata) %>% as.numeric() %>% as.POSIXct(origin = origin)
   se = predict.gam(object = m, newdata = data.frame('newTaskID' = hires), se.fit = T)[[2]] %>% as.numeric()
