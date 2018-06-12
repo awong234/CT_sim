@@ -44,6 +44,8 @@ subrt_upload = function(){
         box_ul(dir_id = 48978104905, file = file, pb = T)
       }
       
+      message(paste0('Finished upload of ', length(toUpload),' files at ', Sys.time() %>% format('%H:%M:%S'), '. Restarting.'))
+      
     }
     
 
