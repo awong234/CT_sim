@@ -51,7 +51,13 @@ subrt_upload = function(){
       message(paste0('Began upload of ', length(toUpload),' files at ', Sys.time() %>% format('%H:%M:%S')))
       
       for(file in 1:length(toUpload)){
-        box_ul(dir_id = 48978104905, file = toUpload[file], pb = F)
+        
+        test = NULL
+        while(is.null(test)){
+          try(expr = {
+            test = box_ul(dir_id = 48978104905, file = toUpload[file], pb = F)
+          })
+        }
         message(paste0('Uploaded ', toUpload[file],': ', file, ' of ', length(toUpload), ' at ', Sys.time() %>% format('%H:%M:%S')))
       }
       
