@@ -5,6 +5,9 @@ for(i in 1:2){
   if(!require(dplyr)){install.packages('dplyr')}
 }
 
+# Check for latest version of boxr
+devtools::install_github('awong234/boxr')
+
 ID_lines = readLines(con = 'app.cfg')
 
 clientID = ID_lines[1]
