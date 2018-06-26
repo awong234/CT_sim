@@ -24,7 +24,7 @@ subrt_upload = function(){
     while(is.null(existing)){
       message(paste0("Attempting to retrieve list . . . attempt number ", attempt, " at ", Sys.time() %>% format('%H:%M:%S')))
       try({
-        existing = box_ls(dir_id = 48978104905, fields = 'name', limit = 1000, pageMode = 'marker')
+        existing = box_ls(dir_id = 48978104905, fields = 'name', limit = 1000)
       })
       attempt = attempt + 1
     }
