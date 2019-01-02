@@ -20,19 +20,9 @@ Install the package using the `install.packages` dialog going through Tools > In
 
 The package *should* install without issue.
 
-#### Directly within R
-
-If the former method doesn't work, try this.
-
-You will need to install Rtools and then run some commands that are already in the script. 
-
-Go get Rtools from the [link here](https://cran.r-project.org/bin/windows/Rtools/Rtools34.exe). This link will go get the installer immediately. Run the installer as you would any other installer.
-
-Then, run the SETUP.R script (a new file). 
-
 #### SETUP.R
 
-This file builds the local SQL database to draw particular settings from. Run the whole script, and you will know that it has been successful if a file `settings.sqlite` of size 3GB shows up in your working directory. 
+This file builds the local SQL database to draw particular settings from. Run the whole script, and you will know that it has been successful if a file `settings_v2.sqlite` of size 0.5GB shows up in your working directory. 
 
 #### Preparation block
 
@@ -58,7 +48,7 @@ You will see things output into the `localOutput` folder as they are completed. 
 
 ### Customizing run
 
-Within the setup block you may customize a few things. Specifically, you can change how many cores your computer will run on, whether you want automatic uploading, and if so, where the paths to the files and cloud folder are. 
+Within the setup block you may customize a few things. Specifically, you can change how many cores your computer will run on.
 
 #### Cores
 
@@ -68,35 +58,9 @@ Set `cores = detectCores()` for maximum performance. Set `cores = 1` for minimum
 
 By default, `numTasks = cores`, so you're doing one task per core that you have. 
 
-#### autoUpload
-
-As mentioned before, you can have the script manage your uploads for you by setting `autoUpload = T`. However, you will see a performance penalty because the `googledrive` package takes a long time to talk to the server. 
-
-### Managing outputs
-
-When you've run the program for some time, you will see a folder called `localOutput` in the `CT_sim` directory, and `.Rdata` files within. There are two ways to get this up to the cloud, either automatically or manually. In either case, you will need to know the cloud folder link:
-
-https://drive.google.com/open?id=1ScHvlCXL-8kjzeeLfb_LTH45worK4b3Y
-
-**NOTE: Automatic uploads are painfully SLOW. On 7 files of size 2kb each, the upload took 3 minutes, as opposed to seconds dragging and dropping. I will be manually uploading my outputs.**
-
 #### Automatic upload
 
-This option will probably be feasible only if you have unlimited google drive space through Cornell. First, ensure that you have migrated the shared folder into your own google drive by clicking on the link above, clicking the folder name, and clicking "Add to My Drive". Ensure that it is in the root (top-most) directory.
-
-![](https://github.com/awong234/CT_sim/blob/master/assets/googleDriveMigrate.png)
-
-If you want the script to manage your uploads automatically, within `RUNSCRIPT.R`, change the value of `autoUpload` to `TRUE`, within the setup block. The file will then source `uploadOutput.R`. 
-
-It will prompt you to generate a token, and at the same time bring up a browser window. 
-
-![Browser prompt.](https://github.com/awong234/CT_sim/blob/master/assets/googleDriveBrowserPrompt.png)
-
-![R prompt.](https://github.com/awong234/CT_sim/blob/master/assets/googleDriveAuth.png)
-
-First, address any inputs that R may ask of you, then in the browser allow tidyverse to access your google drive. You will have a token created in the directory that will authenticate your R session as it communicates with your Drive account.
-
-The script will upload the files as they come out. Once again, note that this will penalize efficiency due to slow uploads.
+The script automatically handles uploading of files to the Box server via `subroutine_autoupload.R`. There will be a cmd window that opens to provide a monitor of upload status. If it is your first time running, you will need to sign into your Box account to allow this program to access the server.
 
 #### Manual upload
 
@@ -116,15 +80,6 @@ When you go to upload **new** files, be sure to follow the next steps! Select al
 * If you select "Update Existing", it will re-upload all of the files you have already uploaded, which will become tedious with greater amounts of files, but not harmful. 
 
 Be sure to upload your outputs frequently so that we have them all in case of system failure.
-
-#### Freeing space
-
-If you have an external hard drive and don't want to use your main hard drive space, please operate in the following order:
-
-1. Stop the analysis on the computer whose space you want to free up. **This is especially important so that there are no outputs being created between steps 2 and 3 that will not be uploaded!**
-1. Upload the outputs to the shard drive.
-1. Move the output files to the external drive.
-1. Restart the analysis.
 
 # Files contained
 
@@ -204,14 +159,18 @@ This page displays some charts for the distribution of tasks taken by user, and 
 
 This page displays the start/end times of each task graphically, and a linear trend of the form (taskIndex ~ timeEnded) is assessed over tasks for prediction of the date of completion. 
 
-### uploadOutput.R
+### subroutine_autoupload.R
 
-tidyverse's `googledrive` package only services your OWN google drive, so MUST have directory already in your account. This function will upload files in the `localOutput/` directory to the shared drive.
+This function scans `localOutput\` and uploads files that do NOT exist on the server. It opens up a cmd window to provide a report of files uploaded through `subroutine_autoupload.bat`.
+
+### subroutine_updateTasksCompleted.R
+
+This function interacts with the SQL server to mark tasks completed that were reserved. It also opens up a cmd window to provide a report of files marked complete through `subroutine.bat`
 
 ### writeSettings.R
 
 This file, when sourced, will write a record of all the proposed settings to memory. This is used in `RUNSCRIPT.R`
 
-### settings.sqlite
+### settings.sqlite and settings_v2.sqlite
 
-After you have run `SETUP.R`, this file will generate in your working directory. It contains all 32 million tasks to be completed.
+After you have run `SETUP.R`, this file will generate in your working directory. It contains all tasks to be completed and their respective parameter settings. The second version pares down the settings table to 4 million settings.
